@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GAD-7 焦虑筛查问卷</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f5f5f5; padding-bottom: 40px; }
+        .container { max-width: 800px; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); margin-top: 20px; }
+        .card-header { background: #f7931e; color: white; border-radius: 12px 12px 0 0; padding: 24px; }
+        .card-body { padding: 28px; }
+        .q-block { background: #f8f9fa; border-radius: 8px; padding: 16px 20px; margin-bottom: 14px; }
+        .q-block p { font-weight: 600; margin-bottom: 10px; }
+        .btn-check:checked+.btn-outline-secondary { background: #f7931e; border-color: #f7931e; color: white; }
+        .btn-submit { width: 100%; padding: 12px; font-size: 1.1rem; font-weight: 600; border-radius: 8px; margin-top: 8px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="mb-1">GAD-7 焦虑筛查问卷</h3>
+                <p class="mb-0 opacity-75">请根据过去两周内的实际情况，回答以下问题</p>
+            </div>
+            <div class="card-body">
+                <form action="/gad7_submit" method="POST">
+                    <input type="hidden" name="start_time" id="start_time">
+                    <div class="row mb-4">
+                        <div class="col-sm-6 mb-3 mb-sm-0">
+                            <label for="student_id" class="form-label fw-bold">学号 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="student_id" name="student_id" required>
+                        </div>
+                        <div class="col-sm-6">
+                            <label for="student_name" class="form-label fw-bold">姓名 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="student_name" name="student_name" required>
+                        </div>
+                    </div>
+                    <div class="q-block">
+                        <p>1. 感到紧张、焦虑或烦躁</p>
+                        <div class="btn-group flex-wrap gap-1" role="group">
+                            <input type="radio" class="btn-check" name="g1" id="g1_0" value="0" required>
+                            <label class="btn btn-outline-secondary" for="g1_0">完全不会</label>
+                            <input type="radio" class="btn-check" name="g1" id="g1_1" value="1">
+                            <label class="btn btn-outline-secondary" for="g1_1">几天</label>
+                            <input type="radio" class="btn-check" name="g1" id="g1_2" value="2">
+                            <label class="btn btn-outline-secondary" for="g1_2">一半以上天数</label>
+                            <input type="radio" class="btn-check" name="g1" id="g1_3" value="3">
+                            <label class="btn btn-outline-secondary" for="g1_3">几乎每天</label>
+                        </div>
+                    </div>
+                    <div class="q-block">
+                        <p>2. 无法停止或控制担忧</p>
+                        <div class="btn-group flex-wrap gap-1" role="group">
+                            <input type="radio" class="btn-check" name="g2" id="g2_0" value="0" required>
+                            <label class="btn btn-outline-secondary" for="g2_0">完全不会</label>
+                            <input type="radio" class="btn-check" name="g2" id="g2_1" value="1">
+                            <label class="btn btn-outline-secondary" for="g2_1">几天</label>
+                            <input type="radio" class="btn-check" name="g2" id="g2_2" value="2">
+                            <label class="btn btn-outline-secondary" for="g2_2">一半以上天数</label>
+                            <input type="radio" class="btn-check" name="g2" id="g2_3" value="3">
+                            <label class="btn btn-outline-secondary" for="g2_3">几乎每天</label>
+                        </div>
+                    </div>
+                    <div class="q-block">
+                        <p>3. 对各种各样的事情担忧过多</p>
+                        <div class="btn-group flex-wrap gap-1" role="group">
+                            <input type="radio" class="btn-check" name="g3" id="g3_0" value="0" required>
+                            <label class="btn btn-outline-secondary" for="g3_0">完全不会</label>
+                            <input type="radio" class="btn-check" name="g3" id="g3_1" value="1">
+                            <label class="btn btn-outline-secondary" for="g3_1">几天</label>
+                            <input type="radio" class="btn-check" name="g3" id="g3_2" value="2">
+                            <label class="btn btn-outline-secondary" for="g3_2">一半以上天数</label>
+                            <input type="radio" class="btn-check" name="g3" id="g3_3" value="3">
+                            <label class="btn btn-outline-secondary" for="g3_3">几乎每天</label>
+                        </div>
+                    </div>
+                    <div class="q-block">
+                        <p>4. 难以放松下来</p>
+                        <div class="btn-group flex-wrap gap-1" role="group">
+                            <input type="radio" class="btn-check" name="g4" id="g4_0" value="0" required>
+                            <label class="btn btn-outline-secondary" for="g4_0">完全不会</label>
+                            <input type="radio" class="btn-check" name="g4" id="g4_1" value="1">
+                            <label class="btn btn-outline-secondary" for="g4_1">几天</label>
+                            <input type="radio" class="btn-check" name="g4" id="g4_2" value="2">
+                            <label class="btn btn-outline-secondary" for="g4_2">一半以上天数</label>
+                            <input type="radio" class="btn-check" name="g4" id="g4_3" value="3">
+                            <label class="btn btn-outline-secondary" for="g4_3">几乎每天</label>
+                        </div>
+                    </div>
+                    <div class="q-block">
+                        <p>5. 烦躁不安，很难安静地坐着</p>
+                        <div class="btn-group flex-wrap gap-1" role="group">
+                            <input type="radio" class="btn-check" name="g5" id="g5_0" value="0" required>
+                            <label class="btn btn-outline-secondary" for="g5_0">完全不会</label>
+                            <input type="radio" class="btn-check" name="g5" id="g5_1" value="1">
+                            <label class="btn btn-outline-secondary" for="g5_1">几天</label>
+                            <input type="radio" class="btn-check" name="g5" id="g5_2" value="2">
+                            <label class="btn btn-outline-secondary" for="g5_2">一半以上天数</label>
+                            <input type="radio" class="btn-check" name="g5" id="g5_3" value="3">
+                            <label class="btn btn-outline-secondary" for="g5_3">几乎每天</label>
+                        </div>
+                    </div>
+                    <div class="q-block">
+                        <p>6. 容易烦恼或急躁</p>
+                        <div class="btn-group flex-wrap gap-1" role="group">
+                            <input type="radio" class="btn-check" name="g6" id="g6_0" value="0" required>
+                            <label class="btn btn-outline-secondary" for="g6_0">完全不会</label>
+                            <input type="radio" class="btn-check" name="g6" id="g6_1" value="1">
+                            <label class="btn btn-outline-secondary" for="g6_1">几天</label>
+                            <input type="radio" class="btn-check" name="g6" id="g6_2" value="2">
+                            <label class="btn btn-outline-secondary" for="g6_2">一半以上天数</label>
+                            <input type="radio" class="btn-check" name="g6" id="g6_3" value="3">
+                            <label class="btn btn-outline-secondary" for="g6_3">几乎每天</label>
+                        </div>
+                    </div>
+                    <div class="q-block">
+                        <p>7. 感到害怕，好像可怕的事情会发生</p>
+                        <div class="btn-group flex-wrap gap-1" role="group">
+                            <input type="radio" class="btn-check" name="g7" id="g7_0" value="0" required>
+                            <label class="btn btn-outline-secondary" for="g7_0">完全不会</label>
+                            <input type="radio" class="btn-check" name="g7" id="g7_1" value="1">
+                            <label class="btn btn-outline-secondary" for="g7_1">几天</label>
+                            <input type="radio" class="btn-check" name="g7" id="g7_2" value="2">
+                            <label class="btn btn-outline-secondary" for="g7_2">一半以上天数</label>
+                            <input type="radio" class="btn-check" name="g7" id="g7_3" value="3">
+                            <label class="btn btn-outline-secondary" for="g7_3">几乎每天</label>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-submit">提交问卷</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.getElementById('start_time').value = new Date().toISOString();
+    </script>
+</body>
+</html>
