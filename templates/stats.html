@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据统计</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container py-5" style="max-width: 700px;">
+        <h2 class="mb-4 text-center">PHQ-9 问卷统计</h2>
+        <div class="row g-3">
+            <div class="col-6"><div class="card text-center shadow-sm"><div class="card-body py-4"><div class="display-5 fw-bold text-primary">{{ total_count }}</div><div class="text-muted">总提交数</div></div></div></div>
+            <div class="col-6"><div class="card text-center shadow-sm"><div class="card-body py-4"><div class="display-5 fw-bold text-success">{{ valid_count }}</div><div class="text-muted">有效问卷</div></div></div></div>
+            <div class="col-6"><div class="card text-center shadow-sm"><div class="card-body py-4"><div class="display-5 fw-bold text-danger">{{ invalid_count }}</div><div class="text-muted">无效问卷</div></div></div></div>
+            <div class="col-6"><div class="card text-center shadow-sm"><div class="card-body py-4"><div class="display-5 fw-bold text-info">{{ avg_score }}</div><div class="text-muted">有效问卷平均分</div></div></div></div>
+        </div>
+        <div class="text-center mt-4">
+            <a href="/survey" class="btn btn-primary me-2">填写问卷</a>
+            <a href="/export" class="btn btn-outline-secondary">导出 CSV</a>
+        </div>
+    </div>
+</body>
+</html>
