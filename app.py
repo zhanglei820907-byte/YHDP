@@ -160,6 +160,32 @@ def init_db():
         )
     """)
 
+    # 运动认知量表答案表
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS cognition_answers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            student_id TEXT NOT NULL,
+            student_name TEXT NOT NULL,
+            uid TEXT,
+            c1 INTEGER, c2 INTEGER, c3 INTEGER, c4 INTEGER, c5 INTEGER,
+            c6 INTEGER, c7 INTEGER, c8 INTEGER, c9 INTEGER, c10 INTEGER,
+            c11 INTEGER, c12 INTEGER, c13 INTEGER, c14 INTEGER, c15 INTEGER,
+            c16 INTEGER, c17 INTEGER, c18 INTEGER, c19 INTEGER, c20 INTEGER,
+            c21 INTEGER, c22 INTEGER, c23 INTEGER, c24 INTEGER, c25 INTEGER,
+            c26 INTEGER, c27 INTEGER, c28 INTEGER, c29 INTEGER, c30 INTEGER,
+            c31 INTEGER, c32 INTEGER, c33 INTEGER, c34 INTEGER, c35 INTEGER,
+            c36 INTEGER, c37 INTEGER, c38 INTEGER, c39 INTEGER, c40 INTEGER,
+            c41 INTEGER, c42 INTEGER, c43 INTEGER,
+            dimension1_benefit INTEGER,
+            dimension2_barrier INTEGER,
+            dimension3_family INTEGER,
+            dimension4_self_efficacy INTEGER,
+            total_score INTEGER,
+            risk_level TEXT,
+            time_start DATETIME, time_end DATETIME, valid_flag BOOLEAN
+        )
+    """)
+
     conn.commit()
     conn.close()
 
@@ -370,6 +396,36 @@ def get_family_risk_level(family_total):
         return "中等支持"
     else:
         return "低支持"
+
+
+# ---- 运动认知计分 ----
+
+def calc_cognition_scores(c_list):
+    """
+    运动认知量表计分（43 题，每题 1-4）。
+    D1 益处认知: c1-c18   (18题，正向)
+    D2 障碍认知: c19-c30  (12题，反向: 5-raw)
+    D3 家庭氛围: c31-c39  (9题，正向)
+    D4 自我效能: c40-c43  (4题，正向)
+    返回 (d1, d2, d3, d4, total)
+    """
+    d1 = sum(c_list[0:18])
+    d2_raw = c_list[18:30]
+    d2 = sum(5 - v for v in d2_raw)
+    d3 = sum(c_list[30:39])
+    d4 = sum(c_list[39:43])
+    total = d1 + d2 + d3 + d4
+    return d1, d2, d3, d4, total
+
+
+def get_cognition_risk_level(score):
+    """根据认知总分返回风险等级（43-172）"""
+    if score >= 129:
+        return "高水平"
+    elif score >= 86:
+        return "中等水平"
+    else:
+        return "低水平"
 
 
 # ============================================================
@@ -872,6 +928,106 @@ def family_support_submit():
 
 
 # ============================================================
+#  运动认知量表
+# ============================================================
+
+@app.route("/cognition_survey")
+def cognition_survey():
+    """运动认知量表填写页面"""
+    return render_template("cognition_survey.html")
+
+
+@app.route("/cognition_submit", methods=["POST"])
+def cognition_submit():
+    """处理运动认知量表提交"""
+    student_id = request.form.get("student_id", "").strip()
+    student_name = request.form.get("student_name", "").strip()
+    start_time_str = request.form.get("start_time", "")
+
+    if not student_id or not student_name:
+        return "学号和姓名为必填项", 400
+
+    # 收集 43 题（1-4分）
+    c_scores = []
+    for i in range(1, 44):
+        try:
+            val = int(request.form.get(f"c{i}", "1"))
+            c_scores.append(max(1, min(4, val)))
+        except (ValueError, TypeError):
+            c_scores.append(1)
+
+    d1, d2, d3, d4, total = calc_cognition_scores(c_scores)
+    risk_level = get_cognition_risk_level(total)
+
+    time_end = datetime.now(timezone.utc)
+    time_end_str = time_end.isoformat()
+    elapsed = 0
+    ts = None
+    if start_time_str:
+        try:
+            ts = datetime.fromisoformat(start_time_str)
+            elapsed = int((time_end - ts).total_seconds())
+        except (ValueError, TypeError):
+            pass
+    valid_flag = elapsed >= 10 if ts else False
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    existing = cursor.execute(
+        "SELECT * FROM students WHERE student_id = ?", (student_id,)
+    ).fetchone()
+    if existing:
+        conn.close()
+        return "该学号已提交过问卷，无需重复填写。"
+
+    uid = generate_uid()
+    cursor.execute(
+        "INSERT INTO students (student_id, student_name, uid) VALUES (?, ?, ?)",
+        (student_id, student_name, uid),
+    )
+
+    cursor.execute("""
+        INSERT INTO cognition_answers (
+            student_id, student_name, uid,
+            c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,
+            c11,c12,c13,c14,c15,c16,c17,c18,c19,c20,
+            c21,c22,c23,c24,c25,c26,c27,c28,c29,c30,
+            c31,c32,c33,c34,c35,c36,c37,c38,c39,c40,
+            c41,c42,c43,
+            dimension1_benefit, dimension2_barrier,
+            dimension3_family, dimension4_self_efficacy,
+            total_score, risk_level,
+            time_start, time_end, valid_flag
+        ) VALUES (
+            ?, ?, ?,
+            ?,?,?,?,?,?,?,?,?,?,
+            ?,?,?,?,?,?,?,?,?,?,
+            ?,?,?,?,?,?,?,?,?,?,
+            ?,?,?,?,?,?,?,?,?,?,
+            ?,?,?,
+            ?, ?, ?, ?, ?, ?,
+            ?, ?, ?
+        )
+    """, (
+        student_id, student_name, uid,
+        *c_scores,
+        d1, d2, d3, d4, total, risk_level,
+        start_time_str if ts else None, time_end_str, valid_flag
+    ))
+    conn.commit()
+    conn.close()
+
+    return render_template(
+        "cognition_result.html",
+        student_id=student_id, student_name=student_name,
+        d1=d1, d2=d2, d3=d3, d4=d4,
+        total_score=total, risk_level=risk_level,
+        valid_flag=valid_flag, uid=uid
+    )
+
+
+# ============================================================
 #  体格测试模块（教师端录入）
 # ============================================================
 
@@ -1245,6 +1401,31 @@ def export_csv():
             row["time_start"], row["time_end"], row["valid_flag"]
         ])
 
+    # ---- 运动认知 数据 ----
+    writer.writerow([])
+    cursor.execute("""
+        SELECT c.*, s.uid
+        FROM cognition_answers c
+        LEFT JOIN students s ON c.student_id = s.student_id
+        ORDER BY c.id
+    """)
+    cog_rows = cursor.fetchall()
+    cog_header = ["cog_id", "student_id", "student_name", "uid"]
+    for i in range(1, 44):
+        cog_header.append(f"c{i}")
+    cog_header += ["d1_benefit", "d2_barrier", "d3_family", "d4_self_efficacy",
+                   "total_score", "risk_level", "time_start", "time_end", "valid_flag"]
+    writer.writerow(cog_header)
+    for row in cog_rows:
+        r = [row["id"], row["student_id"], row["student_name"], row["uid"]]
+        for i in range(1, 44):
+            r.append(row[f"c{i}"])
+        r += [row["dimension1_benefit"], row["dimension2_barrier"],
+              row["dimension3_family"], row["dimension4_self_efficacy"],
+              row["total_score"], row["risk_level"],
+              row["time_start"], row["time_end"], row["valid_flag"]]
+        writer.writerow(r)
+
     conn.close()
     output.seek(0)
 
@@ -1330,30 +1511,36 @@ def stats():
     family_avg_row = cursor.fetchone()
     family_avg = round(family_avg_row["avg_score"], 1) if family_avg_row["avg_score"] else 0
 
+    # 运动认知 统计
+    cursor.execute("SELECT COUNT(*) as cnt FROM cognition_answers")
+    cog_total = cursor.fetchone()["cnt"]
+
+    cursor.execute("SELECT COUNT(*) as cnt FROM cognition_answers WHERE valid_flag = 1")
+    cog_valid = cursor.fetchone()["cnt"]
+
+    cursor.execute("SELECT COUNT(*) as cnt FROM cognition_answers WHERE valid_flag = 0")
+    cog_invalid = cursor.fetchone()["cnt"]
+
+    cursor.execute("SELECT AVG(total_score) as avg_score FROM cognition_answers WHERE valid_flag = 1")
+    cog_avg_row = cursor.fetchone()
+    cog_avg = round(cog_avg_row["avg_score"], 1) if cog_avg_row["avg_score"] else 0
+
     conn.close()
 
     return render_template(
         "stats.html",
-        total_count=total_count,
-        valid_count=valid_count,
-        invalid_count=invalid_count,
-        avg_score=avg_score,
-        gad7_total=gad7_total,
-        gad7_valid=gad7_valid,
-        gad7_invalid=gad7_invalid,
-        gad7_avg=gad7_avg,
-        psqi_total=psqi_total,
-        psqi_valid=psqi_valid,
-        psqi_invalid=psqi_invalid,
-        psqi_avg=psqi_avg,
-        kidmed_total=kidmed_total,
-        kidmed_valid=kidmed_valid,
-        kidmed_invalid=kidmed_invalid,
-        kidmed_avg=kidmed_avg,
-        family_total=family_total,
-        family_valid=family_valid,
-        family_invalid=family_invalid,
-        family_avg=family_avg
+        total_count=total_count, valid_count=valid_count,
+        invalid_count=invalid_count, avg_score=avg_score,
+        gad7_total=gad7_total, gad7_valid=gad7_valid,
+        gad7_invalid=gad7_invalid, gad7_avg=gad7_avg,
+        psqi_total=psqi_total, psqi_valid=psqi_valid,
+        psqi_invalid=psqi_invalid, psqi_avg=psqi_avg,
+        kidmed_total=kidmed_total, kidmed_valid=kidmed_valid,
+        kidmed_invalid=kidmed_invalid, kidmed_avg=kidmed_avg,
+        family_total=family_total, family_valid=family_valid,
+        family_invalid=family_invalid, family_avg=family_avg,
+        cog_total=cog_total, cog_valid=cog_valid,
+        cog_invalid=cog_invalid, cog_avg=cog_avg
     )
 
 

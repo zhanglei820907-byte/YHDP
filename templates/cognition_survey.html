@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>运动认知量表</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f5f5f5; padding-bottom: 40px; }
+        .container { max-width: 860px; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); margin-top: 20px; }
+        .card-header { background: #8E44AD; color: white; border-radius: 12px 12px 0 0; padding: 20px 24px; }
+        .card-body { padding: 24px 28px; }
+        .q-block { background: #f8f9fa; border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; }
+        .q-block p { font-weight: 600; margin-bottom: 6px; font-size: 0.9rem; }
+        .btn-check:checked+.btn-outline-secondary { background: #8E44AD; border-color: #8E44AD; color: white; }
+        .btn-submit { width: 100%; padding: 12px; font-size: 1.1rem; font-weight: 600; border-radius: 8px; background: #8E44AD; border-color: #8E44AD; color: white; }
+        .btn-submit:hover { background: #7D3C98; border-color: #7D3C98; }
+        .btn-nav { background: #8E44AD; border-color: #8E44AD; color: white; }
+        .btn-nav:hover { background: #7D3C98; color: white; }
+        .page-indicator { display: flex; gap: 8px; margin-bottom: 16px; }
+        .page-dot { width: 32px; height: 6px; border-radius: 3px; background: #ddd; }
+        .page-dot.active { background: #8E44AD; }
+        .page-section { display: none; }
+        .page-section.active { display: block; }
+        .q-num { display: inline-block; width: 24px; height: 24px; border-radius: 50%; background: #8E44AD; color: white; text-align: center; line-height: 24px; font-size: 0.75rem; margin-right: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-1">🧠 运动认知量表</h4>
+                <p class="mb-0 opacity-75">共43题，分4个维度。请根据您的真实想法回答，1=非常不同意 2=不同意 3=同意 4=非常同意</p>
+            </div>
+            <div class="card-body">
+                <div class="page-indicator">
+                    <div class="page-dot active" id="dot1"></div>
+                    <div class="page-dot" id="dot2"></div>
+                    <div class="page-dot" id="dot3"></div>
+                    <div class="page-dot" id="dot4"></div>
+                </div>
+
+                <form action="/cognition_submit" method="POST" id="main_form">
+                    <input type="hidden" name="start_time" id="start_time">
+                    <div class="row mb-3">
+                        <div class="col-sm-6 mb-2"><label class="form-label fw-bold">学号 *</label><input type="text" class="form-control" name="student_id" required></div>
+                        <div class="col-sm-6 mb-2"><label class="form-label fw-bold">姓名 *</label><input type="text" class="form-control" name="student_name" required></div>
+                    </div>
+
+                    <!-- Page 1: 益处认知 c1-c18 -->
+                    <div class="page-section active" id="page1">
+                        <h6 class="text-muted mb-3">第一部分：运动益处认知（18题）</h6>
+
+<div class="q-block"><p><span class="q-num">1</span> 运动可以让我更健康</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c1" id="c1_1" value="1" required><label class="btn btn-outline-secondary" for="c1_1">1</label><input type="radio" class="btn-check" name="c1" id="c1_2" value="2"><label class="btn btn-outline-secondary" for="c1_2">2</label><input type="radio" class="btn-check" name="c1" id="c1_3" value="3"><label class="btn btn-outline-secondary" for="c1_3">3</label><input type="radio" class="btn-check" name="c1" id="c1_4" value="4"><label class="btn btn-outline-secondary" for="c1_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">2</span> 运动可以增强我的体质</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c2" id="c2_1" value="1" required><label class="btn btn-outline-secondary" for="c2_1">1</label><input type="radio" class="btn-check" name="c2" id="c2_2" value="2"><label class="btn btn-outline-secondary" for="c2_2">2</label><input type="radio" class="btn-check" name="c2" id="c2_3" value="3"><label class="btn btn-outline-secondary" for="c2_3">3</label><input type="radio" class="btn-check" name="c2" id="c2_4" value="4"><label class="btn btn-outline-secondary" for="c2_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">3</span> 运动能让我保持良好体型</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c3" id="c3_1" value="1" required><label class="btn btn-outline-secondary" for="c3_1">1</label><input type="radio" class="btn-check" name="c3" id="c3_2" value="2"><label class="btn btn-outline-secondary" for="c3_2">2</label><input type="radio" class="btn-check" name="c3" id="c3_3" value="3"><label class="btn btn-outline-secondary" for="c3_3">3</label><input type="radio" class="btn-check" name="c3" id="c3_4" value="4"><label class="btn btn-outline-secondary" for="c3_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">4</span> 运动可以帮我减轻压力</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c4" id="c4_1" value="1" required><label class="btn btn-outline-secondary" for="c4_1">1</label><input type="radio" class="btn-check" name="c4" id="c4_2" value="2"><label class="btn btn-outline-secondary" for="c4_2">2</label><input type="radio" class="btn-check" name="c4" id="c4_3" value="3"><label class="btn btn-outline-secondary" for="c4_3">3</label><input type="radio" class="btn-check" name="c4" id="c4_4" value="4"><label class="btn btn-outline-secondary" for="c4_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">5</span> 运动能改善我的情绪</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c5" id="c5_1" value="1" required><label class="btn btn-outline-secondary" for="c5_1">1</label><input type="radio" class="btn-check" name="c5" id="c5_2" value="2"><label class="btn btn-outline-secondary" for="c5_2">2</label><input type="radio" class="btn-check" name="c5" id="c5_3" value="3"><label class="btn btn-outline-secondary" for="c5_3">3</label><input type="radio" class="btn-check" name="c5" id="c5_4" value="4"><label class="btn btn-outline-secondary" for="c5_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">6</span> 运动能让我更有精力学习</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c6" id="c6_1" value="1" required><label class="btn btn-outline-secondary" for="c6_1">1</label><input type="radio" class="btn-check" name="c6" id="c6_2" value="2"><label class="btn btn-outline-secondary" for="c6_2">2</label><input type="radio" class="btn-check" name="c6" id="c6_3" value="3"><label class="btn btn-outline-secondary" for="c6_3">3</label><input type="radio" class="btn-check" name="c6" id="c6_4" value="4"><label class="btn btn-outline-secondary" for="c6_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">7</span> 运动能帮助我结交朋友</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c7" id="c7_1" value="1" required><label class="btn btn-outline-secondary" for="c7_1">1</label><input type="radio" class="btn-check" name="c7" id="c7_2" value="2"><label class="btn btn-outline-secondary" for="c7_2">2</label><input type="radio" class="btn-check" name="c7" id="c7_3" value="3"><label class="btn btn-outline-secondary" for="c7_3">3</label><input type="radio" class="btn-check" name="c7" id="c7_4" value="4"><label class="btn btn-outline-secondary" for="c7_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">8</span> 运动让我感到快乐</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c8" id="c8_1" value="1" required><label class="btn btn-outline-secondary" for="c8_1">1</label><input type="radio" class="btn-check" name="c8" id="c8_2" value="2"><label class="btn btn-outline-secondary" for="c8_2">2</label><input type="radio" class="btn-check" name="c8" id="c8_3" value="3"><label class="btn btn-outline-secondary" for="c8_3">3</label><input type="radio" class="btn-check" name="c8" id="c8_4" value="4"><label class="btn btn-outline-secondary" for="c8_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">9</span> 运动可以提高我的自信心</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c9" id="c9_1" value="1" required><label class="btn btn-outline-secondary" for="c9_1">1</label><input type="radio" class="btn-check" name="c9" id="c9_2" value="2"><label class="btn btn-outline-secondary" for="c9_2">2</label><input type="radio" class="btn-check" name="c9" id="c9_3" value="3"><label class="btn btn-outline-secondary" for="c9_3">3</label><input type="radio" class="btn-check" name="c9" id="c9_4" value="4"><label class="btn btn-outline-secondary" for="c9_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">10</span> 运动让我的生活更加充实</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c10" id="c10_1" value="1" required><label class="btn btn-outline-secondary" for="c10_1">1</label><input type="radio" class="btn-check" name="c10" id="c10_2" value="2"><label class="btn btn-outline-secondary" for="c10_2">2</label><input type="radio" class="btn-check" name="c10" id="c10_3" value="3"><label class="btn btn-outline-secondary" for="c10_3">3</label><input type="radio" class="btn-check" name="c10" id="c10_4" value="4"><label class="btn btn-outline-secondary" for="c10_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">11</span> 运动能提高我的睡眠质量</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c11" id="c11_1" value="1" required><label class="btn btn-outline-secondary" for="c11_1">1</label><input type="radio" class="btn-check" name="c11" id="c11_2" value="2"><label class="btn btn-outline-secondary" for="c11_2">2</label><input type="radio" class="btn-check" name="c11" id="c11_3" value="3"><label class="btn btn-outline-secondary" for="c11_3">3</label><input type="radio" class="btn-check" name="c11" id="c11_4" value="4"><label class="btn btn-outline-secondary" for="c11_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">12</span> 运动可以让我更有活力</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c12" id="c12_1" value="1" required><label class="btn btn-outline-secondary" for="c12_1">1</label><input type="radio" class="btn-check" name="c12" id="c12_2" value="2"><label class="btn btn-outline-secondary" for="c12_2">2</label><input type="radio" class="btn-check" name="c12" id="c12_3" value="3"><label class="btn btn-outline-secondary" for="c12_3">3</label><input type="radio" class="btn-check" name="c12" id="c12_4" value="4"><label class="btn btn-outline-secondary" for="c12_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">13</span> 运动能预防慢性疾病</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c13" id="c13_1" value="1" required><label class="btn btn-outline-secondary" for="c13_1">1</label><input type="radio" class="btn-check" name="c13" id="c13_2" value="2"><label class="btn btn-outline-secondary" for="c13_2">2</label><input type="radio" class="btn-check" name="c13" id="c13_3" value="3"><label class="btn btn-outline-secondary" for="c13_3">3</label><input type="radio" class="btn-check" name="c13" id="c13_4" value="4"><label class="btn btn-outline-secondary" for="c13_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">14</span> 定期运动是一种好的生活习惯</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c14" id="c14_1" value="1" required><label class="btn btn-outline-secondary" for="c14_1">1</label><input type="radio" class="btn-check" name="c14" id="c14_2" value="2"><label class="btn btn-outline-secondary" for="c14_2">2</label><input type="radio" class="btn-check" name="c14" id="c14_3" value="3"><label class="btn btn-outline-secondary" for="c14_3">3</label><input type="radio" class="btn-check" name="c14" id="c14_4" value="4"><label class="btn btn-outline-secondary" for="c14_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">15</span> 运动有利于心理健康</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c15" id="c15_1" value="1" required><label class="btn btn-outline-secondary" for="c15_1">1</label><input type="radio" class="btn-check" name="c15" id="c15_2" value="2"><label class="btn btn-outline-secondary" for="c15_2">2</label><input type="radio" class="btn-check" name="c15" id="c15_3" value="3"><label class="btn btn-outline-secondary" for="c15_3">3</label><input type="radio" class="btn-check" name="c15" id="c15_4" value="4"><label class="btn btn-outline-secondary" for="c15_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">16</span> 运动能让我更好地应对挫折</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c16" id="c16_1" value="1" required><label class="btn btn-outline-secondary" for="c16_1">1</label><input type="radio" class="btn-check" name="c16" id="c16_2" value="2"><label class="btn btn-outline-secondary" for="c16_2">2</label><input type="radio" class="btn-check" name="c16" id="c16_3" value="3"><label class="btn btn-outline-secondary" for="c16_3">3</label><input type="radio" class="btn-check" name="c16" id="c16_4" value="4"><label class="btn btn-outline-secondary" for="c16_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">17</span> 运动让我有更多机会接触自然</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c17" id="c17_1" value="1" required><label class="btn btn-outline-secondary" for="c17_1">1</label><input type="radio" class="btn-check" name="c17" id="c17_2" value="2"><label class="btn btn-outline-secondary" for="c17_2">2</label><input type="radio" class="btn-check" name="c17" id="c17_3" value="3"><label class="btn btn-outline-secondary" for="c17_3">3</label><input type="radio" class="btn-check" name="c17" id="c17_4" value="4"><label class="btn btn-outline-secondary" for="c17_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">18</span> 运动的益处远大于不运动的坏处</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c18" id="c18_1" value="1" required><label class="btn btn-outline-secondary" for="c18_1">1</label><input type="radio" class="btn-check" name="c18" id="c18_2" value="2"><label class="btn btn-outline-secondary" for="c18_2">2</label><input type="radio" class="btn-check" name="c18" id="c18_3" value="3"><label class="btn btn-outline-secondary" for="c18_3">3</label><input type="radio" class="btn-check" name="c18" id="c18_4" value="4"><label class="btn btn-outline-secondary" for="c18_4">4</label></div></div>
+
+                        <div class="text-end mt-3">
+                            <button type="button" class="btn btn-nav" onclick="goPage(2)">下一页 →</button>
+                        </div>
+                    </div>
+
+                    <!-- Page 2: 障碍认知 c19-c30 (反向) -->
+                    <div class="page-section" id="page2">
+                        <h6 class="text-muted mb-3">第二部分：运动障碍认知（12题）<br><small class="text-danger">⚠️ 此部分为反向计分，分数越高表示障碍越大</small></h6>
+
+<div class="q-block"><p><span class="q-num">19</span> 我没有足够的时间进行运动</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c19" id="c19_1" value="1"><label class="btn btn-outline-secondary" for="c19_1">1</label><input type="radio" class="btn-check" name="c19" id="c19_2" value="2"><label class="btn btn-outline-secondary" for="c19_2">2</label><input type="radio" class="btn-check" name="c19" id="c19_3" value="3"><label class="btn btn-outline-secondary" for="c19_3">3</label><input type="radio" class="btn-check" name="c19" id="c19_4" value="4"><label class="btn btn-outline-secondary" for="c19_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">20</span> 学业太忙让我无法去运动</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c20" id="c20_1" value="1"><label class="btn btn-outline-secondary" for="c20_1">1</label><input type="radio" class="btn-check" name="c20" id="c20_2" value="2"><label class="btn btn-outline-secondary" for="c20_2">2</label><input type="radio" class="btn-check" name="c20" id="c20_3" value="3"><label class="btn btn-outline-secondary" for="c20_3">3</label><input type="radio" class="btn-check" name="c20" id="c20_4" value="4"><label class="btn btn-outline-secondary" for="c20_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">21</span> 运动让我感到太累</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c21" id="c21_1" value="1"><label class="btn btn-outline-secondary" for="c21_1">1</label><input type="radio" class="btn-check" name="c21" id="c21_2" value="2"><label class="btn btn-outline-secondary" for="c21_2">2</label><input type="radio" class="btn-check" name="c21" id="c21_3" value="3"><label class="btn btn-outline-secondary" for="c21_3">3</label><input type="radio" class="btn-check" name="c21" id="c21_4" value="4"><label class="btn btn-outline-secondary" for="c21_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">22</span> 我没有合适的运动场地</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c22" id="c22_1" value="1"><label class="btn btn-outline-secondary" for="c22_1">1</label><input type="radio" class="btn-check" name="c22" id="c22_2" value="2"><label class="btn btn-outline-secondary" for="c22_2">2</label><input type="radio" class="btn-check" name="c22" id="c22_3" value="3"><label class="btn btn-outline-secondary" for="c22_3">3</label><input type="radio" class="btn-check" name="c22" id="c22_4" value="4"><label class="btn btn-outline-secondary" for="c22_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">23</span> 天气不好时我不愿意运动</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c23" id="c23_1" value="1"><label class="btn btn-outline-secondary" for="c23_1">1</label><input type="radio" class="btn-check" name="c23" id="c23_2" value="2"><label class="btn btn-outline-secondary" for="c23_2">2</label><input type="radio" class="btn-check" name="c23" id="c23_3" value="3"><label class="btn btn-outline-secondary" for="c23_3">3</label><input type="radio" class="btn-check" name="c23" id="c23_4" value="4"><label class="btn btn-outline-secondary" for="c23_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">24</span> 没有人陪我一起运动</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c24" id="c24_1" value="1"><label class="btn btn-outline-secondary" for="c24_1">1</label><input type="radio" class="btn-check" name="c24" id="c24_2" value="2"><label class="btn btn-outline-secondary" for="c24_2">2</label><input type="radio" class="btn-check" name="c24" id="c24_3" value="3"><label class="btn btn-outline-secondary" for="c24_3">3</label><input type="radio" class="btn-check" name="c24" id="c24_4" value="4"><label class="btn btn-outline-secondary" for="c24_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">25</span> 运动器材太贵了</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c25" id="c25_1" value="1"><label class="btn btn-outline-secondary" for="c25_1">1</label><input type="radio" class="btn-check" name="c25" id="c25_2" value="2"><label class="btn btn-outline-secondary" for="c25_2">2</label><input type="radio" class="btn-check" name="c25" id="c25_3" value="3"><label class="btn btn-outline-secondary" for="c25_3">3</label><input type="radio" class="btn-check" name="c25" id="c25_4" value="4"><label class="btn btn-outline-secondary" for="c25_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">26</span> 我担心运动时会受伤</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c26" id="c26_1" value="1"><label class="btn btn-outline-secondary" for="c26_1">1</label><input type="radio" class="btn-check" name="c26" id="c26_2" value="2"><label class="btn btn-outline-secondary" for="c26_2">2</label><input type="radio" class="btn-check" name="c26" id="c26_3" value="3"><label class="btn btn-outline-secondary" for="c26_3">3</label><input type="radio" class="btn-check" name="c26" id="c26_4" value="4"><label class="btn btn-outline-secondary" for="c26_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">27</span> 我不知道该怎么运动</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c27" id="c27_1" value="1"><label class="btn btn-outline-secondary" for="c27_1">1</label><input type="radio" class="btn-check" name="c27" id="c27_2" value="2"><label class="btn btn-outline-secondary" for="c27_2">2</label><input type="radio" class="btn-check" name="c27" id="c27_3" value="3"><label class="btn btn-outline-secondary" for="c27_3">3</label><input type="radio" class="btn-check" name="c27" id="c27_4" value="4"><label class="btn btn-outline-secondary" for="c27_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">28</span> 运动占用了我与朋友相处的时间</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c28" id="c28_1" value="1"><label class="btn btn-outline-secondary" for="c28_1">1</label><input type="radio" class="btn-check" name="c28" id="c28_2" value="2"><label class="btn btn-outline-secondary" for="c28_2">2</label><input type="radio" class="btn-check" name="c28" id="c28_3" value="3"><label class="btn btn-outline-secondary" for="c28_3">3</label><input type="radio" class="btn-check" name="c28" id="c28_4" value="4"><label class="btn btn-outline-secondary" for="c28_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">29</span> 运动时我感到不自在</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c29" id="c29_1" value="1"><label class="btn btn-outline-secondary" for="c29_1">1</label><input type="radio" class="btn-check" name="c29" id="c29_2" value="2"><label class="btn btn-outline-secondary" for="c29_2">2</label><input type="radio" class="btn-check" name="c29" id="c29_3" value="3"><label class="btn btn-outline-secondary" for="c29_3">3</label><input type="radio" class="btn-check" name="c29" id="c29_4" value="4"><label class="btn btn-outline-secondary" for="c29_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">30</span> 我有其他更重要的事情要做</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c30" id="c30_1" value="1"><label class="btn btn-outline-secondary" for="c30_1">1</label><input type="radio" class="btn-check" name="c30" id="c30_2" value="2"><label class="btn btn-outline-secondary" for="c30_2">2</label><input type="radio" class="btn-check" name="c30" id="c30_3" value="3"><label class="btn btn-outline-secondary" for="c30_3">3</label><input type="radio" class="btn-check" name="c30" id="c30_4" value="4"><label class="btn btn-outline-secondary" for="c30_4">4</label></div></div>
+
+                        <div class="d-flex justify-content-between mt-3">
+                            <button type="button" class="btn btn-outline-secondary" onclick="goPage(1)">← 上一页</button>
+                            <button type="button" class="btn btn-nav" onclick="goPage(3)">下一页 →</button>
+                        </div>
+                    </div>
+
+                    <!-- Page 3: 家庭氛围 c31-c39 -->
+                    <div class="page-section" id="page3">
+                        <h6 class="text-muted mb-3">第三部分：家庭运动氛围（9题）</h6>
+
+<div class="q-block"><p><span class="q-num">31</span> 我的家人会一起参加体育活动</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c31" id="c31_1" value="1"><label class="btn btn-outline-secondary" for="c31_1">1</label><input type="radio" class="btn-check" name="c31" id="c31_2" value="2"><label class="btn btn-outline-secondary" for="c31_2">2</label><input type="radio" class="btn-check" name="c31" id="c31_3" value="3"><label class="btn btn-outline-secondary" for="c31_3">3</label><input type="radio" class="btn-check" name="c31" id="c31_4" value="4"><label class="btn btn-outline-secondary" for="c31_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">32</span> 家人鼓励我参加运动</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c32" id="c32_1" value="1"><label class="btn btn-outline-secondary" for="c32_1">1</label><input type="radio" class="btn-check" name="c32" id="c32_2" value="2"><label class="btn btn-outline-secondary" for="c32_2">2</label><input type="radio" class="btn-check" name="c32" id="c32_3" value="3"><label class="btn btn-outline-secondary" for="c32_3">3</label><input type="radio" class="btn-check" name="c32" id="c32_4" value="4"><label class="btn btn-outline-secondary" for="c32_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">33</span> 家中有运动相关的器材</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c33" id="c33_1" value="1"><label class="btn btn-outline-secondary" for="c33_1">1</label><input type="radio" class="btn-check" name="c33" id="c33_2" value="2"><label class="btn btn-outline-secondary" for="c33_2">2</label><input type="radio" class="btn-check" name="c33" id="c33_3" value="3"><label class="btn btn-outline-secondary" for="c33_3">3</label><input type="radio" class="btn-check" name="c33" id="c33_4" value="4"><label class="btn btn-outline-secondary" for="c33_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">34</span> 家人会关注我的运动表现</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c34" id="c34_1" value="1"><label class="btn btn-outline-secondary" for="c34_1">1</label><input type="radio" class="btn-check" name="c34" id="c34_2" value="2"><label class="btn btn-outline-secondary" for="c34_2">2</label><input type="radio" class="btn-check" name="c34" id="c34_3" value="3"><label class="btn btn-outline-secondary" for="c34_3">3</label><input type="radio" class="btn-check" name="c34" id="c34_4" value="4"><label class="btn btn-outline-secondary" for="c34_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">35</span> 家庭活动经常包含运动元素</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c35" id="c35_1" value="1"><label class="btn btn-outline-secondary" for="c35_1">1</label><input type="radio" class="btn-check" name="c35" id="c35_2" value="2"><label class="btn btn-outline-secondary" for="c35_2">2</label><input type="radio" class="btn-check" name="c35" id="c35_3" value="3"><label class="btn btn-outline-secondary" for="c35_3">3</label><input type="radio" class="btn-check" name="c35" id="c35_4" value="4"><label class="btn btn-outline-secondary" for="c35_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">36</span> 家人会和我讨论运动话题</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c36" id="c36_1" value="1"><label class="btn btn-outline-secondary" for="c36_1">1</label><input type="radio" class="btn-check" name="c36" id="c36_2" value="2"><label class="btn btn-outline-secondary" for="c36_2">2</label><input type="radio" class="btn-check" name="c36" id="c36_3" value="3"><label class="btn btn-outline-secondary" for="c36_3">3</label><input type="radio" class="btn-check" name="c36" id="c36_4" value="4"><label class="btn btn-outline-secondary" for="c36_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">37</span> 家人支持我参加体育比赛或活动</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c37" id="c37_1" value="1"><label class="btn btn-outline-secondary" for="c37_1">1</label><input type="radio" class="btn-check" name="c37" id="c37_2" value="2"><label class="btn btn-outline-secondary" for="c37_2">2</label><input type="radio" class="btn-check" name="c37" id="c37_3" value="3"><label class="btn btn-outline-secondary" for="c37_3">3</label><input type="radio" class="btn-check" name="c37" id="c37_4" value="4"><label class="btn btn-outline-secondary" for="c37_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">38</span> 我家附近有便利的运动场所</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c38" id="c38_1" value="1"><label class="btn btn-outline-secondary" for="c38_1">1</label><input type="radio" class="btn-check" name="c38" id="c38_2" value="2"><label class="btn btn-outline-secondary" for="c38_2">2</label><input type="radio" class="btn-check" name="c38" id="c38_3" value="3"><label class="btn btn-outline-secondary" for="c38_3">3</label><input type="radio" class="btn-check" name="c38" id="c38_4" value="4"><label class="btn btn-outline-secondary" for="c38_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">39</span> 家庭重视体育锻炼</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c39" id="c39_1" value="1"><label class="btn btn-outline-secondary" for="c39_1">1</label><input type="radio" class="btn-check" name="c39" id="c39_2" value="2"><label class="btn btn-outline-secondary" for="c39_2">2</label><input type="radio" class="btn-check" name="c39" id="c39_3" value="3"><label class="btn btn-outline-secondary" for="c39_3">3</label><input type="radio" class="btn-check" name="c39" id="c39_4" value="4"><label class="btn btn-outline-secondary" for="c39_4">4</label></div></div>
+
+                        <div class="d-flex justify-content-between mt-3">
+                            <button type="button" class="btn btn-outline-secondary" onclick="goPage(2)">← 上一页</button>
+                            <button type="button" class="btn btn-nav" onclick="goPage(4)">下一页 →</button>
+                        </div>
+                    </div>
+
+                    <!-- Page 4: 自我效能 c40-c43 -->
+                    <div class="page-section" id="page4">
+                        <h6 class="text-muted mb-3">第四部分：运动自我效能（4题）</h6>
+
+<div class="q-block"><p><span class="q-num">40</span> 即使很忙我也能坚持运动</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c40" id="c40_1" value="1"><label class="btn btn-outline-secondary" for="c40_1">1</label><input type="radio" class="btn-check" name="c40" id="c40_2" value="2"><label class="btn btn-outline-secondary" for="c40_2">2</label><input type="radio" class="btn-check" name="c40" id="c40_3" value="3"><label class="btn btn-outline-secondary" for="c40_3">3</label><input type="radio" class="btn-check" name="c40" id="c40_4" value="4"><label class="btn btn-outline-secondary" for="c40_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">41</span> 即使天气不好我也能坚持运动</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c41" id="c41_1" value="1"><label class="btn btn-outline-secondary" for="c41_1">1</label><input type="radio" class="btn-check" name="c41" id="c41_2" value="2"><label class="btn btn-outline-secondary" for="c41_2">2</label><input type="radio" class="btn-check" name="c41" id="c41_3" value="3"><label class="btn btn-outline-secondary" for="c41_3">3</label><input type="radio" class="btn-check" name="c41" id="c41_4" value="4"><label class="btn btn-outline-secondary" for="c41_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">42</span> 即使疲劳我也能按计划运动</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c42" id="c42_1" value="1"><label class="btn btn-outline-secondary" for="c42_1">1</label><input type="radio" class="btn-check" name="c42" id="c42_2" value="2"><label class="btn btn-outline-secondary" for="c42_2">2</label><input type="radio" class="btn-check" name="c42" id="c42_3" value="3"><label class="btn btn-outline-secondary" for="c42_3">3</label><input type="radio" class="btn-check" name="c42" id="c42_4" value="4"><label class="btn btn-outline-secondary" for="c42_4">4</label></div></div>
+
+<div class="q-block"><p><span class="q-num">43</span> 我相信自己能够坚持定期运动</p>
+<div class="btn-group btn-group-sm"><input type="radio" class="btn-check" name="c43" id="c43_1" value="1"><label class="btn btn-outline-secondary" for="c43_1">1</label><input type="radio" class="btn-check" name="c43" id="c43_2" value="2"><label class="btn btn-outline-secondary" for="c43_2">2</label><input type="radio" class="btn-check" name="c43" id="c43_3" value="3"><label class="btn btn-outline-secondary" for="c43_3">3</label><input type="radio" class="btn-check" name="c43" id="c43_4" value="4"><label class="btn btn-outline-secondary" for="c43_4">4</label></div></div>
+
+                        <div class="d-flex justify-content-between mt-3">
+                            <button type="button" class="btn btn-outline-secondary" onclick="goPage(3)">← 上一页</button>
+                            <button type="submit" class="btn btn-submit" style="width:auto;padding:10px 40px;">提交问卷</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.getElementById('start_time').value = new Date().toISOString();
+        function goPage(n) {
+            document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
+            document.getElementById('page'+n).classList.add('active');
+            document.querySelectorAll('.page-dot').forEach(d => d.classList.remove('active'));
+            document.getElementById('dot'+n).classList.add('active');
+            window.scrollTo(0, 0);
+        }
+    </script>
+</body>
+</html>
