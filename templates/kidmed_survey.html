@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KIDMED 地中海饮食质量指数</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f5f5f5; padding-bottom: 40px; }
+        .container { max-width: 800px; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); margin-top: 20px; }
+        .card-header { background: #E74C3C; color: white; border-radius: 12px 12px 0 0; padding: 24px; }
+        .card-body { padding: 28px; }
+        .q-block { background: #f8f9fa; border-radius: 8px; padding: 14px 20px; margin-bottom: 12px; }
+        .q-block p { font-weight: 600; margin-bottom: 8px; }
+        .btn-check:checked+.btn-outline-secondary { background: #E74C3C; border-color: #E74C3C; color: white; }
+        .btn-submit { width: 100%; padding: 12px; font-size: 1.1rem; font-weight: 600; border-radius: 8px; margin-top: 8px; background: #E74C3C; border-color: #E74C3C; color: white; }
+        .btn-submit:hover { background: #c0392b; border-color: #c0392b; }
+        .section-title { font-size: 1.05rem; font-weight: 700; color: #E74C3C; margin: 24px 0 14px 0; padding-bottom: 6px; border-bottom: 2px solid #e0e0e0; }
+        .q-num { display: inline-block; width: 26px; height: 26px; border-radius: 50%; background: #E74C3C; color: white; text-align: center; line-height: 26px; font-size: 0.8rem; margin-right: 6px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="mb-1">🥗 KIDMED 地中海饮食质量指数</h3>
+                <p class="mb-0 opacity-75">请根据您的日常饮食习惯，如实回答以下 16 个问题</p>
+            </div>
+            <div class="card-body">
+                <form action="/kidmed_submit" method="POST">
+                    <input type="hidden" name="start_time" id="start_time">
+                    <div class="row mb-4">
+                        <div class="col-sm-6 mb-3 mb-sm-0">
+                            <label for="student_id" class="form-label fw-bold">学号 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="student_id" name="student_id" required>
+                        </div>
+                        <div class="col-sm-6">
+                            <label for="student_name" class="form-label fw-bold">姓名 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="student_name" name="student_name" required>
+                        </div>
+                    </div>
+
+                    <div class="section-title">一、水果与蔬菜</div>
+
+                    <div class="q-block">
+                        <p><span class="q-num">1</span> 你每天吃水果或喝鲜榨果汁吗？</p>
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="q1" id="q1_1" value="1" required>
+                            <label class="btn btn-outline-secondary" for="q1_1">是</label>
+                            <input type="radio" class="btn-check" name="q1" id="q1_0" value="0">
+                            <label class="btn btn-outline-secondary" for="q1_0">否</label>
+                        </div>
+                    </div>
+
+                    <div class="q-block">
+                        <p><span class="q-num">2</span> 你每天吃超过一种水果吗？</p>
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="q2" id="q2_1" value="1" required>
+                            <label class="btn btn-outline-secondary" for="q2_1">是</label>
+                            <input type="radio" class="btn-check" name="q2" id="q2_0" value="0">
+                            <label class="btn btn-outline-secondary" for="q2_0">否</label>
+                        </div>
+                    </div>
+
+                    <div class="q-block">
+                        <p><span class="q-num">3</span> 你每天吃新鲜或煮熟的蔬菜吗？</p>
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="q3" id="q3_1" value="1" required>
+                            <label class="btn btn-outline-secondary" for="q3_1">是</label>
+                            <input type="radio" class="btn-check" name="q3" id="q3_0" value="0">
+                            <label class="btn btn-outline-secondary" for="q3_0">否</label>
+                        </div>
+                    </div>
+
+                    <div class="q-block">
+                        <p><span class="q-num">4</span> 你每天吃超过一次蔬菜吗？</p>
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="q4" id="q4_1" value="1" required>
+                            <label class="btn btn-outline-secondary" for="q4_1">是</label>
+                            <input type="radio" class="btn-check" name="q4" id="q4_0" value="0">
+                            <label class="btn btn-outline-secondary" for="q4_0">否</label>
+                        </div>
+                    </div>
+
+                    <div class="section-title">二、蛋白质与豆类</div>
+
+                    <div class="q-block">
+                        <p><span class="q-num">5</span> 你每周吃鱼 2-3 次或以上吗？</p>
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="q5" id="q5_1" value="1" required>
+                            <label class="btn btn-outline-secondary" for="q5_1">是</label>
+                            <input type="radio" class="btn-check" name="q5" id="q5_0" value="0">
+                            <label class="btn btn-outline-secondary" for="q5_0">否</label>
+                        </div>
+                    </div>
+
+                    <div class="q-block">
+                        <p><span class="q-num">6</span> 你每周去快餐店（汉堡、炸鸡等）超过 1 次吗？</p>
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="q6" id="q6_1" value="1" required>
+                            <label class="btn btn-outline-secondary" for="q6_1">是</label>
+                            <input type="radio" class="btn-check" name="q6" id="q6_0" value="0">
+                            <label class="btn btn-outline-secondary" for="q6_0">否</label>
+                        </div>
+                    </div>
+
+                    <div class="q-block">
+                        <p><span class="q-num">7</span> 你喜欢吃豆类（扁豆、鹰嘴豆、黄豆等），每周至少吃一次吗？</p>
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="q7" id="q7_1" value="1" required>
+                            <label class="btn btn-outline-secondary" for="q7_1">是</label>
+                            <input type="radio" class="btn-check" name="q7" id="q7_0" value="0">
+                            <label class="btn btn-outline-secondary" for="q7_0">否</label>
+                        </div>
+                    </div>
+
+                    <div class="section-title">三、主食与谷物</div>
+
+                    <div class="q-block">
+                        <p><span class="q-num">8</span> 你每周吃面食或米饭 5 次或以上吗？</p>
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="q8" id="q8_1" value="1" required>
+                            <label class="btn btn-outline-secondary" for="q8_1">是</label>
+                            <input type="radio" class="btn-check" name="q8" id="q8_0" value="0">
+                            <label class="btn btn-outline-secondary" for="q8_0">否</label>
+                        </div>
+                    </div>
+
+                    <div class="q-block">
+                        <p><span class="q-num">9</span> 你早餐吃麦片或全谷物食品吗？</p>
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="q9" id="q9_1" value="1" required>
+                            <label class="btn btn-outline-secondary" for="q9_1">是</label>
+                            <input type="radio" class="btn-check" name="q9" id="q9_0" value="0">
+                            <label class="btn btn-outline-secondary" for="q9_0">否</label>
+                        </div>
+                    </div>
+
+                    <div class="section-title">四、坚果与油脂</div>
+
+                    <div class="q-block">
+                        <p><span class="q-num">10</span> 你每周吃坚果（核桃、杏仁等）2-3 次吗？</p>
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="q10" id="q10_1" value="1" required>
+                            <label class="btn btn-outline-secondary" for="q10_1">是</label>
+                            <input type="radio" class="btn-check" name="q10" id="q10_0" value="0">
+                            <label class="btn btn-outline-secondary" for="q10_0">否</label>
+                        </div>
+                    </div>
+
+                    <div class="q-block">
+                        <p><span class="q-num">11</span> 你家里主要使用橄榄油烹饪吗？</p>
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="q11" id="q11_1" value="1" required>
+                            <label class="btn btn-outline-secondary" for="q11_1">是</label>
+                            <input type="radio" class="btn-check" name="q11" id="q11_0" value="0">
+                            <label class="btn btn-outline-secondary" for="q11_0">否</label>
+                        </div>
+                    </div>
+
+                    <div class="section-title">五、乳制品与早餐习惯</div>
+
+                    <div class="q-block">
+                        <p><span class="q-num">12</span> 你每天吃乳制品（酸奶、奶酪等）吗？</p>
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="q12" id="q12_1" value="1" required>
+                            <label class="btn btn-outline-secondary" for="q12_1">是</label>
+                            <input type="radio" class="btn-check" name="q12" id="q12_0" value="0">
+                            <label class="btn btn-outline-secondary" for="q12_0">否</label>
+                        </div>
+                    </div>
+
+                    <div class="q-block">
+                        <p><span class="q-num">13</span> 你经常不吃早餐吗？</p>
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="q13" id="q13_1" value="1" required>
+                            <label class="btn btn-outline-secondary" for="q13_1">是</label>
+                            <input type="radio" class="btn-check" name="q13" id="q13_0" value="0">
+                            <label class="btn btn-outline-secondary" for="q13_0">否</label>
+                        </div>
+                    </div>
+
+                    <div class="q-block">
+                        <p><span class="q-num">14</span> 你早餐常吃糕点、甜甜圈等商业烘焙食品吗？</p>
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="q14" id="q14_1" value="1" required>
+                            <label class="btn btn-outline-secondary" for="q14_1">是</label>
+                            <input type="radio" class="btn-check" name="q14" id="q14_0" value="0">
+                            <label class="btn btn-outline-secondary" for="q14_0">否</label>
+                        </div>
+                    </div>
+
+                    <div class="section-title">六、甜食与饮料</div>
+
+                    <div class="q-block">
+                        <p><span class="q-num">15</span> 你每天吃糖果或甜食吗？</p>
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="q15" id="q15_1" value="1" required>
+                            <label class="btn btn-outline-secondary" for="q15_1">是</label>
+                            <input type="radio" class="btn-check" name="q15" id="q15_0" value="0">
+                            <label class="btn btn-outline-secondary" for="q15_0">否</label>
+                        </div>
+                    </div>
+
+                    <div class="q-block">
+                        <p><span class="q-num">16</span> 你每天喝含糖饮料（可乐、果汁饮料等）吗？</p>
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="q16" id="q16_1" value="1" required>
+                            <label class="btn btn-outline-secondary" for="q16_1">是</label>
+                            <input type="radio" class="btn-check" name="q16" id="q16_0" value="0">
+                            <label class="btn btn-outline-secondary" for="q16_0">否</label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-submit">提交问卷</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.getElementById('start_time').value = new Date().toISOString();
+    </script>
+</body>
+</html>

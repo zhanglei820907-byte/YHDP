@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YHDP 高校心理健康问卷系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f0f2f5; padding-bottom: 40px; }
+        .container { max-width: 900px; }
+        .hero { text-align: center; padding: 36px 20px 20px; }
+        .hero h2 { font-weight: 700; color: #333; }
+        .hero p { color: #666; margin-top: 8px; }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin-top: 8px; }
+        .survey-card {
+            border: none; border-radius: 14px; box-shadow: 0 4px 18px rgba(0,0,0,0.07);
+            transition: transform 0.2s, box-shadow 0.2s; text-decoration: none; overflow: hidden;
+            display: flex; flex-direction: column;
+        }
+        .survey-card:hover { transform: translateY(-4px); box-shadow: 0 8px 28px rgba(0,0,0,0.12); text-decoration: none; }
+        .survey-card .card-top { padding: 28px 24px 18px; color: white; text-align: center; }
+        .survey-card .card-top .icon { font-size: 2.6rem; margin-bottom: 6px; }
+        .survey-card .card-top h5 { font-weight: 700; margin-bottom: 4px; }
+        .survey-card .card-top .sub { opacity: 0.85; font-size: 0.9rem; }
+        .survey-card .card-body { padding: 18px 22px; background: white; flex: 1; }
+        .survey-card .card-body ul { margin: 0; padding-left: 18px; color: #555; font-size: 0.9rem; }
+        .survey-card .card-body li { margin-bottom: 4px; }
+        .survey-card .card-footer { background: white; border-top: 1px solid #f1f1f1; padding: 14px 22px; text-align: center; }
+        .phq9   .card-top { background: #4a6cf7; }
+        .gad7   .card-top { background: #f7931e; }
+        .psqi   .card-top { background: #1b9e77; }
+        .kidmed .card-top { background: #E74C3C; }
+        .btn-card { border-radius: 20px; font-weight: 600; padding: 6px 28px; }
+        .phq9   .btn-card { color: #4a6cf7; border-color: #4a6cf7; }
+        .gad7   .btn-card { color: #f7931e; border-color: #f7931e; }
+        .psqi   .btn-card { color: #1b9e77; border-color: #1b9e77; }
+        .kidmed .btn-card { color: #E74C3C; border-color: #E74C3C; }
+        .phq9   .btn-card:hover { background: #4a6cf7; color: white; }
+        .gad7   .btn-card:hover { background: #f7931e; color: white; }
+        .psqi   .btn-card:hover { background: #1b9e77; color: white; }
+        .kidmed .btn-card:hover { background: #E74C3C; color: white; }
+        .footer-links { text-align: center; margin-top: 28px; }
+        .footer-links a { margin: 0 10px; color: #888; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="hero">
+            <h2>📋 YHDP 高校心理健康问卷系统</h2>
+            <p>请选择您要填写的问卷。所有数据仅用于心理健康评估，严格保密。</p>
+        </div>
+
+        <div class="card-grid">
+            <!-- PHQ-9 卡片 -->
+            <a href="/survey" class="survey-card phq9">
+                <div class="card-top">
+                    <div class="icon">🧠</div>
+                    <h5>PHQ-9 抑郁筛查</h5>
+                    <div class="sub">Patient Health Questionnaire</div>
+                </div>
+                <div class="card-body">
+                    <ul>
+                        <li>9 道自评题目</li>
+                        <li>评估过去两周情绪状态</li>
+                        <li>总分 0-27 分</li>
+                        <li>五级风险分级</li>
+                    </ul>
+                </div>
+                <div class="card-footer">
+                    <span class="btn btn-outline-primary btn-card">开始填写 →</span>
+                </div>
+            </a>
+
+            <!-- GAD-7 卡片 -->
+            <a href="/gad7_survey" class="survey-card gad7">
+                <div class="card-top">
+                    <div class="icon">😰</div>
+                    <h5>GAD-7 焦虑筛查</h5>
+                    <div class="sub">Generalized Anxiety Disorder</div>
+                </div>
+                <div class="card-body">
+                    <ul>
+                        <li>7 道自评题目</li>
+                        <li>评估过去两周焦虑程度</li>
+                        <li>总分 0-21 分</li>
+                        <li>四级风险分级</li>
+                    </ul>
+                </div>
+                <div class="card-footer">
+                    <span class="btn btn-outline-warning btn-card">开始填写 →</span>
+                </div>
+            </a>
+
+            <!-- PSQI 卡片 -->
+            <a href="/psqi_survey" class="survey-card psqi">
+                <div class="card-top">
+                    <div class="icon">🌙</div>
+                    <h5>PSQI 睡眠质量</h5>
+                    <div class="sub">Pittsburgh Sleep Quality Index</div>
+                </div>
+                <div class="card-body">
+                    <ul>
+                        <li>19 道自评题目</li>
+                        <li>评估近1个月睡眠状况</li>
+                        <li>7 维度计分（0-21）</li>
+                        <li>四级睡眠质量分级</li>
+                    </ul>
+                </div>
+                <div class="card-footer">
+                    <span class="btn btn-outline-success btn-card">开始填写 →</span>
+                </div>
+            </a>
+
+            <!-- KIDMED 卡片 -->
+            <a href="/kidmed_survey" class="survey-card kidmed">
+                <div class="card-top">
+                    <div class="icon">🥗</div>
+                    <h5>KIDMED 饮食质量</h5>
+                    <div class="sub">Mediterranean Diet Quality Index</div>
+                </div>
+                <div class="card-body">
+                    <ul>
+                        <li>16 道是否判断题</li>
+                        <li>评估日常饮食结构</li>
+                        <li>正负向计分（0-16）</li>
+                        <li>三级饮食质量分级</li>
+                    </ul>
+                </div>
+                <div class="card-footer">
+                    <span class="btn btn-outline-secondary btn-card" style="color:#E74C3C;border-color:#E74C3C;">开始填写 →</span>
+                </div>
+            </a>
+        </div>
+
+        <div class="footer-links">
+            <a href="/stats">📊 数据统计</a>
+            <a href="/export">📥 导出 CSV</a>
+        </div>
+    </div>
+</body>
+</html>

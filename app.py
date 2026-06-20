@@ -86,6 +86,25 @@ def init_db():
         )
     """)
 
+    # KIDMED 地中海饮食质量指数答案表
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS kidmed_answers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            student_id TEXT NOT NULL,
+            student_name TEXT NOT NULL,
+            uid TEXT,
+            q1 INTEGER, q2 INTEGER, q3 INTEGER, q4 INTEGER,
+            q5 INTEGER, q6 INTEGER, q7 INTEGER, q8 INTEGER,
+            q9 INTEGER, q10 INTEGER, q11 INTEGER, q12 INTEGER,
+            q13 INTEGER, q14 INTEGER, q15 INTEGER, q16 INTEGER,
+            total_score INTEGER,
+            risk_level TEXT,
+            time_start DATETIME,
+            time_end DATETIME,
+            valid_flag BOOLEAN
+        )
+    """)
+
     conn.commit()
     conn.close()
 
@@ -216,13 +235,45 @@ def get_psqi_risk_level(score):
         return "睡眠质量极差"
 
 
+# ---- KIDMED 计分 ----
+
+# KIDMED 正负向题定义
+KIDMED_POSITIVE = {1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12}
+KIDMED_NEGATIVE = {6, 13, 14, 15, 16}
+
+
+def calc_kidmed_score(scores):
+    """
+    KIDMED 计分（16 题，每题 0/1）。
+    正向题 选"是"=1,"否"=0；负向题 选"是"=0,"否"=1。总分 0-16。
+    """
+    total = 0
+    for i, val in enumerate(scores, start=1):
+        if i in KIDMED_POSITIVE:
+            total += val
+        else:
+            total += (1 - val)  # 负向反转
+    return total
+
+
+def get_kidmed_risk_level(score):
+    """根据 KIDMED 总分返回饮食质量等级"""
+    if score >= 8:
+        return "饮食质量良好"
+    elif score >= 4:
+        return "需要改善"
+    else:
+        return "饮食质量较差"
+
+
 # ============================================================
 #  路由
 # ============================================================
 
 @app.route("/")
 def index():
-    return "YHDP 问卷系统 - 测试成功"
+    """统一入口页面"""
+    return render_template("index.html")
 
 
 @app.route("/init_db")
@@ -473,6 +524,112 @@ def psqi_submit():
 
 
 # ============================================================
+#  KIDMED 地中海饮食质量指数
+# ============================================================
+
+@app.route("/kidmed_survey")
+def kidmed_survey():
+    """KIDMED 饮食质量问卷填写页面"""
+    return render_template("kidmed_survey.html")
+
+
+@app.route("/kidmed_submit", methods=["POST"])
+def kidmed_submit():
+    """
+    处理 KIDMED 问卷提交：
+    - 学号重复检查（查 students 表）
+    - 正负向计分 → 总分 0-16 + 风险等级
+    - 秒答检测（<10s → valid_flag=0）
+    - UID 生成
+    """
+    student_id = request.form.get("student_id", "").strip()
+    student_name = request.form.get("student_name", "").strip()
+    start_time_str = request.form.get("start_time", "")
+
+    if not student_id or not student_name:
+        return "学号和姓名为必填项", 400
+
+    # 收集 16 题得分（0 或 1）
+    scores = []
+    for i in range(1, 17):
+        try:
+            val = int(request.form.get(f"q{i}", "0"))
+            scores.append(max(0, min(1, val)))
+        except (ValueError, TypeError):
+            scores.append(0)
+
+    # 正负向计分
+    total_score = calc_kidmed_score(scores)
+    risk_level = get_kidmed_risk_level(total_score)
+
+    # 秒答检测
+    time_end = datetime.now(timezone.utc)
+    time_end_str = time_end.isoformat()
+
+    elapsed_seconds = 0
+    time_start_dt = None
+    if start_time_str:
+        try:
+            time_start_dt = datetime.fromisoformat(start_time_str)
+            elapsed_seconds = int((time_end - time_start_dt).total_seconds())
+        except (ValueError, TypeError):
+            pass
+
+    valid_flag = elapsed_seconds >= 10 if time_start_dt else False
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # 学号重复检查
+    existing = cursor.execute(
+        "SELECT * FROM students WHERE student_id = ?", (student_id,)
+    ).fetchone()
+
+    if existing:
+        conn.close()
+        return "该学号已提交过问卷，无需重复填写。"
+
+    # 生成 UID，写入 students 表
+    uid = generate_uid()
+    cursor.execute(
+        "INSERT INTO students (student_id, student_name, uid) VALUES (?, ?, ?)",
+        (student_id, student_name, uid),
+    )
+
+    # 写入 kidmed_answers 表
+    cursor.execute("""
+        INSERT INTO kidmed_answers
+            (student_id, student_name, uid,
+             q1, q2, q3, q4, q5, q6, q7, q8,
+             q9, q10, q11, q12, q13, q14, q15, q16,
+             total_score, risk_level, time_start, time_end, valid_flag)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        student_id, student_name, uid,
+        scores[0], scores[1], scores[2], scores[3],
+        scores[4], scores[5], scores[6], scores[7],
+        scores[8], scores[9], scores[10], scores[11],
+        scores[12], scores[13], scores[14], scores[15],
+        total_score, risk_level,
+        start_time_str if time_start_dt else None,
+        time_end_str,
+        valid_flag
+    ))
+    conn.commit()
+    conn.close()
+
+    return render_template(
+        "kidmed_result.html",
+        student_id=student_id,
+        student_name=student_name,
+        total_score=total_score,
+        risk_level=risk_level,
+        valid_flag=valid_flag,
+        uid=uid
+    )
+
+
+# ============================================================
 #  导出与统计
 # ============================================================
 
@@ -560,6 +717,33 @@ def export_csv():
             row["time_start"], row["time_end"], row["valid_flag"]
         ])
 
+    # ---- KIDMED 数据 ----
+    writer.writerow([])
+    cursor.execute("""
+        SELECT k.*, s.uid
+        FROM kidmed_answers k
+        LEFT JOIN students s ON k.student_id = s.student_id
+        ORDER BY k.id
+    """)
+    kidmed_rows = cursor.fetchall()
+
+    writer.writerow([
+        "kidmed_id", "student_id", "student_name", "uid",
+        "q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8",
+        "q9", "q10", "q11", "q12", "q13", "q14", "q15", "q16",
+        "total_score", "risk_level", "time_start", "time_end", "valid_flag"
+    ])
+    for row in kidmed_rows:
+        writer.writerow([
+            row["id"], row["student_id"], row["student_name"], row["uid"],
+            row["q1"], row["q2"], row["q3"], row["q4"], row["q5"],
+            row["q6"], row["q7"], row["q8"], row["q9"], row["q10"],
+            row["q11"], row["q12"], row["q13"], row["q14"], row["q15"],
+            row["q16"],
+            row["total_score"], row["risk_level"],
+            row["time_start"], row["time_end"], row["valid_flag"]
+        ])
+
     conn.close()
     output.seek(0)
 
@@ -617,6 +801,20 @@ def stats():
     psqi_avg_row = cursor.fetchone()
     psqi_avg = round(psqi_avg_row["avg_score"], 1) if psqi_avg_row["avg_score"] else 0
 
+    # KIDMED 统计
+    cursor.execute("SELECT COUNT(*) as cnt FROM kidmed_answers")
+    kidmed_total = cursor.fetchone()["cnt"]
+
+    cursor.execute("SELECT COUNT(*) as cnt FROM kidmed_answers WHERE valid_flag = 1")
+    kidmed_valid = cursor.fetchone()["cnt"]
+
+    cursor.execute("SELECT COUNT(*) as cnt FROM kidmed_answers WHERE valid_flag = 0")
+    kidmed_invalid = cursor.fetchone()["cnt"]
+
+    cursor.execute("SELECT AVG(total_score) as avg_score FROM kidmed_answers WHERE valid_flag = 1")
+    kidmed_avg_row = cursor.fetchone()
+    kidmed_avg = round(kidmed_avg_row["avg_score"], 1) if kidmed_avg_row["avg_score"] else 0
+
     conn.close()
 
     return render_template(
@@ -632,7 +830,11 @@ def stats():
         psqi_total=psqi_total,
         psqi_valid=psqi_valid,
         psqi_invalid=psqi_invalid,
-        psqi_avg=psqi_avg
+        psqi_avg=psqi_avg,
+        kidmed_total=kidmed_total,
+        kidmed_valid=kidmed_valid,
+        kidmed_invalid=kidmed_invalid,
+        kidmed_avg=kidmed_avg
     )
 
 
