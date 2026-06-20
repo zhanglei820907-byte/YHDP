@@ -105,6 +105,61 @@ def init_db():
         )
     """)
 
+    # 体格测试数据表（教师端录入）
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS physical_measurements (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            student_id TEXT NOT NULL,
+            student_name TEXT NOT NULL,
+            uid TEXT,
+            measure_date DATE,
+            grip_left_1 REAL, grip_left_2 REAL, grip_left_3 REAL,
+            grip_right_1 REAL, grip_right_2 REAL, grip_right_3 REAL,
+            grip_left_best REAL, grip_right_best REAL, grip_avg_best REAL,
+            grip_dominant INTEGER,
+            waist_circ REAL,
+            weight REAL, bmi REAL,
+            body_fat_rate REAL, body_fat_mass REAL,
+            muscle_mass REAL, skeletal_muscle REAL,
+            bone_mass REAL,
+            body_water_rate REAL, body_water_mass REAL,
+            protein_rate REAL, protein_mass REAL,
+            bmr REAL,
+            visceral_fat INTEGER,
+            subcut_fat_rate REAL,
+            body_age INTEGER,
+            body_type INTEGER,
+            heart_rate INTEGER,
+            body_score INTEGER,
+            measure_operator TEXT,
+            data_complete INTEGER DEFAULT 0,
+            data_quality_note TEXT,
+            measure_time DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    # 家庭体力活动支持量表答案表
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS family_support_answers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            student_id TEXT NOT NULL,
+            student_name TEXT NOT NULL,
+            uid TEXT,
+            mother_self_ex INTEGER, father_self_ex INTEGER,
+            mother_joint_ex INTEGER, father_joint_ex INTEGER,
+            mother_invites INTEGER, father_invites INTEGER,
+            mother_transport INTEGER, father_transport INTEGER,
+            mother_registers INTEGER, father_registers INTEGER,
+            mother_watches INTEGER, father_watches INTEGER,
+            mother_tv_limit INTEGER, father_tv_limit INTEGER,
+            mother_computer_limit INTEGER, father_computer_limit INTEGER,
+            mother_game_limit INTEGER, father_game_limit INTEGER,
+            mother_total INTEGER, father_total INTEGER, family_total INTEGER,
+            risk_level TEXT,
+            time_start DATETIME, time_end DATETIME, valid_flag BOOLEAN
+        )
+    """)
+
     conn.commit()
     conn.close()
 
@@ -264,6 +319,57 @@ def get_kidmed_risk_level(score):
         return "需要改善"
     else:
         return "饮食质量较差"
+
+
+# ---- 家庭支持计分 ----
+
+# 反向题（需要 5 - raw 转换）；其余为正向题
+FAMILY_REVERSE_KEYS = {
+    "mother_tv_limit", "father_tv_limit",
+    "mother_computer_limit", "father_computer_limit",
+    "mother_game_limit", "father_game_limit",
+}
+
+
+def calc_family_support(raw_scores):
+    """
+    家庭体力活动支持量表计分（18 题，每题 1-4）。
+    正向题直接计分；反向题 actual = 5 - raw。
+    返回 (mother_total, father_total, family_total)。
+    """
+    scored = {}
+    for key, raw in raw_scores.items():
+        if key in FAMILY_REVERSE_KEYS:
+            scored[key] = 5 - raw
+        else:
+            scored[key] = raw
+
+    mother_total = sum(
+        scored[k] for k in [
+            "mother_self_ex", "mother_joint_ex", "mother_invites",
+            "mother_transport", "mother_registers", "mother_watches",
+            "mother_tv_limit", "mother_computer_limit", "mother_game_limit"
+        ]
+    )
+    father_total = sum(
+        scored[k] for k in [
+            "father_self_ex", "father_joint_ex", "father_invites",
+            "father_transport", "father_registers", "father_watches",
+            "father_tv_limit", "father_computer_limit", "father_game_limit"
+        ]
+    )
+    family_total = mother_total + father_total
+    return mother_total, father_total, family_total
+
+
+def get_family_risk_level(family_total):
+    """根据家庭总支持分返回风险等级"""
+    if family_total >= 54:
+        return "高支持"
+    elif family_total >= 36:
+        return "中等支持"
+    else:
+        return "低支持"
 
 
 # ============================================================
@@ -630,6 +736,361 @@ def kidmed_submit():
 
 
 # ============================================================
+#  家庭体力活动支持量表
+# ============================================================
+
+FAMILY_QUESTIONS = [
+    ("mother_self_ex",  "母亲自己锻炼"),
+    ("father_self_ex",  "父亲自己锻炼"),
+    ("mother_joint_ex", "母亲与孩子一起锻炼"),
+    ("father_joint_ex", "父亲与孩子一起锻炼"),
+    ("mother_invites",  "母亲邀请孩子去锻炼"),
+    ("father_invites",  "父亲邀请孩子去锻炼"),
+    ("mother_transport","母亲接送孩子去运动场所"),
+    ("father_transport","父亲接送孩子去运动场所"),
+    ("mother_registers","母亲为孩子报名运动班"),
+    ("father_registers","父亲为孩子报名运动班"),
+    ("mother_watches",  "母亲观看孩子运动或比赛"),
+    ("father_watches",  "父亲观看孩子运动或比赛"),
+    ("mother_tv_limit", "母亲限制看电视时间"),
+    ("father_tv_limit", "父亲限制看电视时间"),
+    ("mother_computer_limit", "母亲限制用电脑时间"),
+    ("father_computer_limit", "父亲限制用电脑时间"),
+    ("mother_game_limit", "母亲限制玩电子游戏时间"),
+    ("father_game_limit", "父亲限制玩电子游戏时间"),
+]
+
+
+@app.route("/family_support_survey")
+def family_support_survey():
+    """家庭体力活动支持量表填写页面"""
+    return render_template("family_support_survey.html")
+
+
+@app.route("/family_support_submit", methods=["POST"])
+def family_support_submit():
+    """处理家庭支持量表提交"""
+    student_id = request.form.get("student_id", "").strip()
+    student_name = request.form.get("student_name", "").strip()
+    start_time_str = request.form.get("start_time", "")
+
+    if not student_id or not student_name:
+        return "学号和姓名为必填项", 400
+
+    # 收集 18 题原始得分（1-4），字段名与表列名一致
+    raw_scores = {}
+    for field, _label in FAMILY_QUESTIONS:
+        try:
+            val = int(request.form.get(field, "1"))
+            raw_scores[field] = max(1, min(4, val))
+        except (ValueError, TypeError):
+            raw_scores[field] = 1
+
+    # 计分
+    mother_total, father_total, family_total = calc_family_support(raw_scores)
+    risk_level = get_family_risk_level(family_total)
+
+    # 秒答检测
+    time_end = datetime.now(timezone.utc)
+    time_end_str = time_end.isoformat()
+    elapsed_seconds = 0
+    time_start_dt = None
+    if start_time_str:
+        try:
+            time_start_dt = datetime.fromisoformat(start_time_str)
+            elapsed_seconds = int((time_end - time_start_dt).total_seconds())
+        except (ValueError, TypeError):
+            pass
+    valid_flag = elapsed_seconds >= 10 if time_start_dt else False
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # 学号重复检查
+    existing = cursor.execute(
+        "SELECT * FROM students WHERE student_id = ?", (student_id,)
+    ).fetchone()
+    if existing:
+        conn.close()
+        return "该学号已提交过问卷，无需重复填写。"
+
+    # 生成 UID
+    uid = generate_uid()
+    cursor.execute(
+        "INSERT INTO students (student_id, student_name, uid) VALUES (?, ?, ?)",
+        (student_id, student_name, uid),
+    )
+
+    # 入库
+    cursor.execute("""
+        INSERT INTO family_support_answers (
+            student_id, student_name, uid,
+            mother_self_ex, father_self_ex,
+            mother_joint_ex, father_joint_ex,
+            mother_invites, father_invites,
+            mother_transport, father_transport,
+            mother_registers, father_registers,
+            mother_watches, father_watches,
+            mother_tv_limit, father_tv_limit,
+            mother_computer_limit, father_computer_limit,
+            mother_game_limit, father_game_limit,
+            mother_total, father_total, family_total,
+            risk_level, time_start, time_end, valid_flag
+        ) VALUES (
+            ?, ?, ?,
+            ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?, ?, ?
+        )
+    """, (
+        student_id, student_name, uid,
+        raw_scores["mother_self_ex"], raw_scores["father_self_ex"],
+        raw_scores["mother_joint_ex"], raw_scores["father_joint_ex"],
+        raw_scores["mother_invites"], raw_scores["father_invites"],
+        raw_scores["mother_transport"], raw_scores["father_transport"],
+        raw_scores["mother_registers"], raw_scores["father_registers"],
+        raw_scores["mother_watches"], raw_scores["father_watches"],
+        raw_scores["mother_tv_limit"], raw_scores["father_tv_limit"],
+        raw_scores["mother_computer_limit"], raw_scores["father_computer_limit"],
+        raw_scores["mother_game_limit"], raw_scores["father_game_limit"],
+        mother_total, father_total, family_total,
+        risk_level,
+        start_time_str if time_start_dt else None,
+        time_end_str, valid_flag
+    ))
+    conn.commit()
+    conn.close()
+
+    return render_template(
+        "family_support_result.html",
+        student_id=student_id, student_name=student_name,
+        mother_total=mother_total, father_total=father_total,
+        family_total=family_total, risk_level=risk_level,
+        valid_flag=valid_flag, uid=uid
+    )
+
+
+# ============================================================
+#  体格测试模块（教师端录入）
+# ============================================================
+
+@app.route("/physical_input")
+def physical_input():
+    """教师端体测数据录入页面"""
+    return render_template("physical_input.html")
+
+
+@app.route("/physical_search", methods=["POST"])
+def physical_search():
+    """按学号检索学生信息（用于录入页面自动填充）"""
+    student_id = request.form.get("student_id", "").strip()
+    if not student_id:
+        return '<div class="alert alert-warning">请输入学号</div>'
+
+    conn = get_db()
+    cursor = conn.cursor()
+    student = cursor.execute(
+        "SELECT * FROM students WHERE student_id = ?", (student_id,)
+    ).fetchone()
+    conn.close()
+
+    if not student:
+        return '<div class="alert alert-danger">未找到该学号的学生信息，请先在问卷系统中提交任意问卷以注册学号</div>'
+
+    return f'''<div class="alert alert-success">
+        <strong>✅ 已找到</strong><br>
+        学号：{student["student_id"]}<br>
+        姓名：{student["student_name"]}<br>
+        UID：{student["uid"]}
+        <input type="hidden" id="found_student_name" value="{student["student_name"]}">
+        <input type="hidden" id="found_uid" value="{student["uid"]}">
+    </div>'''
+
+
+@app.route("/physical_submit", methods=["POST"])
+def physical_submit():
+    """保存体测数据"""
+    student_id = request.form.get("student_id", "").strip()
+    student_name = request.form.get("student_name", "").strip()
+
+    if not student_id or not student_name:
+        return "学号和姓名为必填项", 400
+
+    # 辅助函数：安全读取 float/int
+    def get_float(key, default=None):
+        val = request.form.get(key, "").strip()
+        if val == "":
+            return default
+        try:
+            return float(val)
+        except (ValueError, TypeError):
+            return default
+
+    def get_int(key, default=None):
+        val = request.form.get(key, "").strip()
+        if val == "":
+            return default
+        try:
+            return int(float(val))
+        except (ValueError, TypeError):
+            return default
+
+    # 握力数据
+    gl1 = get_float("grip_left_1")
+    gl2 = get_float("grip_left_2")
+    gl3 = get_float("grip_left_3")
+    gr1 = get_float("grip_right_1")
+    gr2 = get_float("grip_right_2")
+    gr3 = get_float("grip_right_3")
+
+    # 自动计算握力最佳值
+    left_vals = [v for v in [gl1, gl2, gl3] if v is not None]
+    right_vals = [v for v in [gr1, gr2, gr3] if v is not None]
+    grip_left_best = max(left_vals) if left_vals else None
+    grip_right_best = max(right_vals) if right_vals else None
+    grip_avg_best = ((grip_left_best or 0) + (grip_right_best or 0)) / 2 if (grip_left_best is not None and grip_right_best is not None) else None
+
+    grip_dominant = get_int("grip_dominant")
+
+    # 腰围
+    waist_circ = get_float("waist_circ")
+
+    # 体脂称数据
+    weight = get_float("weight")
+    bmi = get_float("bmi")
+    body_fat_rate = get_float("body_fat_rate")
+    body_fat_mass = get_float("body_fat_mass")
+    muscle_mass = get_float("muscle_mass")
+    skeletal_muscle = get_float("skeletal_muscle")
+    bone_mass = get_float("bone_mass")
+    body_water_rate = get_float("body_water_rate")
+    body_water_mass = get_float("body_water_mass")
+    protein_rate = get_float("protein_rate")
+    protein_mass = get_float("protein_mass")
+    bmr = get_float("bmr")
+    visceral_fat = get_int("visceral_fat")
+    subcut_fat_rate = get_float("subcut_fat_rate")
+    body_age = get_int("body_age")
+    body_type = get_int("body_type")
+    heart_rate = get_int("heart_rate")
+    body_score = get_int("body_score")
+
+    measure_date = request.form.get("measure_date", "").strip()
+    measure_operator = request.form.get("measure_operator", "").strip()
+    data_quality_note = request.form.get("data_quality_note", "").strip() or None
+
+    # 自动判断数据完整度
+    required_fields = [
+        gl1, gl2, gl3, gr1, gr2, gr3, grip_dominant,
+        waist_circ, weight, bmi, body_fat_rate, body_fat_mass,
+        muscle_mass, skeletal_muscle, bone_mass,
+        body_water_rate, body_water_mass, protein_rate, protein_mass,
+        bmr, visceral_fat, subcut_fat_rate, body_age, body_type,
+        heart_rate, body_score
+    ]
+    data_complete = 1 if all(v is not None for v in required_fields) else 0
+
+    # 查询 UID
+    conn = get_db()
+    cursor = conn.cursor()
+    uid_row = cursor.execute(
+        "SELECT uid FROM students WHERE student_id = ?", (student_id,)
+    ).fetchone()
+    uid = uid_row["uid"] if uid_row else None
+
+    cursor.execute("""
+        INSERT INTO physical_measurements (
+            student_id, student_name, uid, measure_date,
+            grip_left_1, grip_left_2, grip_left_3,
+            grip_right_1, grip_right_2, grip_right_3,
+            grip_left_best, grip_right_best, grip_avg_best,
+            grip_dominant, waist_circ,
+            weight, bmi, body_fat_rate, body_fat_mass,
+            muscle_mass, skeletal_muscle, bone_mass,
+            body_water_rate, body_water_mass,
+            protein_rate, protein_mass, bmr,
+            visceral_fat, subcut_fat_rate,
+            body_age, body_type, heart_rate, body_score,
+            measure_operator, data_complete, data_quality_note
+        ) VALUES (
+            ?, ?, ?, ?,
+            ?, ?, ?,
+            ?, ?, ?,
+            ?, ?, ?,
+            ?, ?,
+            ?, ?, ?, ?,
+            ?, ?, ?,
+            ?, ?,
+            ?, ?, ?,
+            ?, ?,
+            ?, ?, ?, ?,
+            ?, ?, ?
+        )
+    """, (
+        student_id, student_name, uid, measure_date if measure_date else None,
+        gl1, gl2, gl3,
+        gr1, gr2, gr3,
+        grip_left_best, grip_right_best, grip_avg_best,
+        grip_dominant, waist_circ,
+        weight, bmi, body_fat_rate, body_fat_mass,
+        muscle_mass, skeletal_muscle, bone_mass,
+        body_water_rate, body_water_mass,
+        protein_rate, protein_mass, bmr,
+        visceral_fat, subcut_fat_rate,
+        body_age, body_type, heart_rate, body_score,
+        measure_operator if measure_operator else None,
+        data_complete, data_quality_note
+    ))
+    conn.commit()
+    conn.close()
+
+    return render_template(
+        "physical_view.html",
+        message=f"✅ 体测数据已保存！学号：{student_id}，姓名：{student_name}",
+        records=None,
+        detail=None
+    )
+
+
+@app.route("/physical_view")
+def physical_view():
+    """查看已录入的体测数据列表"""
+    conn = get_db()
+    cursor = conn.cursor()
+    records = cursor.execute(
+        """SELECT id, student_id, student_name, measure_date,
+                  measure_operator, data_complete, measure_time
+           FROM physical_measurements
+           ORDER BY measure_time DESC"""
+    ).fetchall()
+    conn.close()
+    return render_template("physical_view.html", records=records, detail=None, message=None)
+
+
+@app.route("/physical_view/<int:record_id>")
+def physical_view_detail(record_id):
+    """查看某条体测记录的详细信息"""
+    conn = get_db()
+    cursor = conn.cursor()
+    detail = cursor.execute(
+        "SELECT * FROM physical_measurements WHERE id = ?", (record_id,)
+    ).fetchone()
+    records = cursor.execute(
+        """SELECT id, student_id, student_name, measure_date,
+                  measure_operator, data_complete, measure_time
+           FROM physical_measurements
+           ORDER BY measure_time DESC"""
+    ).fetchall()
+    conn.close()
+
+    if not detail:
+        return "记录不存在", 404
+
+    return render_template("physical_view.html", records=records, detail=detail, message=None)
+
+
+# ============================================================
 #  导出与统计
 # ============================================================
 
@@ -744,6 +1205,46 @@ def export_csv():
             row["time_start"], row["time_end"], row["valid_flag"]
         ])
 
+    # ---- 家庭体力活动支持 数据 ----
+    writer.writerow([])
+    cursor.execute("""
+        SELECT f.*, s.uid
+        FROM family_support_answers f
+        LEFT JOIN students s ON f.student_id = s.student_id
+        ORDER BY f.id
+    """)
+    family_rows = cursor.fetchall()
+    writer.writerow([
+        "family_id", "student_id", "student_name", "uid",
+        "mother_self_ex", "father_self_ex",
+        "mother_joint_ex", "father_joint_ex",
+        "mother_invites", "father_invites",
+        "mother_transport", "father_transport",
+        "mother_registers", "father_registers",
+        "mother_watches", "father_watches",
+        "mother_tv_limit", "father_tv_limit",
+        "mother_computer_limit", "father_computer_limit",
+        "mother_game_limit", "father_game_limit",
+        "mother_total", "father_total", "family_total",
+        "risk_level", "time_start", "time_end", "valid_flag"
+    ])
+    for row in family_rows:
+        writer.writerow([
+            row["id"], row["student_id"], row["student_name"], row["uid"],
+            row["mother_self_ex"], row["father_self_ex"],
+            row["mother_joint_ex"], row["father_joint_ex"],
+            row["mother_invites"], row["father_invites"],
+            row["mother_transport"], row["father_transport"],
+            row["mother_registers"], row["father_registers"],
+            row["mother_watches"], row["father_watches"],
+            row["mother_tv_limit"], row["father_tv_limit"],
+            row["mother_computer_limit"], row["father_computer_limit"],
+            row["mother_game_limit"], row["father_game_limit"],
+            row["mother_total"], row["father_total"], row["family_total"],
+            row["risk_level"],
+            row["time_start"], row["time_end"], row["valid_flag"]
+        ])
+
     conn.close()
     output.seek(0)
 
@@ -815,6 +1316,20 @@ def stats():
     kidmed_avg_row = cursor.fetchone()
     kidmed_avg = round(kidmed_avg_row["avg_score"], 1) if kidmed_avg_row["avg_score"] else 0
 
+    # 家庭支持 统计
+    cursor.execute("SELECT COUNT(*) as cnt FROM family_support_answers")
+    family_total = cursor.fetchone()["cnt"]
+
+    cursor.execute("SELECT COUNT(*) as cnt FROM family_support_answers WHERE valid_flag = 1")
+    family_valid = cursor.fetchone()["cnt"]
+
+    cursor.execute("SELECT COUNT(*) as cnt FROM family_support_answers WHERE valid_flag = 0")
+    family_invalid = cursor.fetchone()["cnt"]
+
+    cursor.execute("SELECT AVG(family_total) as avg_score FROM family_support_answers WHERE valid_flag = 1")
+    family_avg_row = cursor.fetchone()
+    family_avg = round(family_avg_row["avg_score"], 1) if family_avg_row["avg_score"] else 0
+
     conn.close()
 
     return render_template(
@@ -834,7 +1349,11 @@ def stats():
         kidmed_total=kidmed_total,
         kidmed_valid=kidmed_valid,
         kidmed_invalid=kidmed_invalid,
-        kidmed_avg=kidmed_avg
+        kidmed_avg=kidmed_avg,
+        family_total=family_total,
+        family_valid=family_valid,
+        family_invalid=family_invalid,
+        family_avg=family_avg
     )
 
 

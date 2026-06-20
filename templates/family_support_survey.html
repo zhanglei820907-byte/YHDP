@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家庭体力活动支持量表</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f5f5f5; padding-bottom: 40px; }
+        .container { max-width: 860px; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); margin-top: 20px; }
+        .card-header { background: #3B8BEA; color: white; border-radius: 12px 12px 0 0; padding: 24px; }
+        .card-body { padding: 28px; }
+        .q-block { background: #f8f9fa; border-radius: 8px; padding: 14px 20px; margin-bottom: 10px; }
+        .q-block p { font-weight: 600; margin-bottom: 6px; font-size: 0.92rem; }
+        .btn-check:checked+.btn-outline-secondary { background: #3B8BEA; border-color: #3B8BEA; color: white; }
+        .btn-submit { width: 100%; padding: 12px; font-size: 1.1rem; font-weight: 600; border-radius: 8px; margin-top: 8px; background: #3B8BEA; border-color: #3B8BEA; color: white; }
+        .btn-submit:hover { background: #2E6FCF; border-color: #2E6FCF; }
+        .section-title { font-size: 1.05rem; font-weight: 700; color: #3B8BEA; margin: 24px 0 10px; padding-bottom: 6px; border-bottom: 2px solid #e0e0e0; }
+        .parent-label { display: inline-block; font-size: 0.8rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; margin-right: 6px; }
+        .mom { background: #fce4ec; color: #c62828; }
+        .dad { background: #e3f2fd; color: #1565c0; }
+        .q-num { display: inline-block; width: 24px; height: 24px; border-radius: 50%; background: #3B8BEA; color: white; text-align: center; line-height: 24px; font-size: 0.75rem; margin-right: 4px; }
+        .scale-hint { font-size: 0.75rem; color: #999; float: right; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="mb-1">👨‍👩‍👧 家庭体力活动支持量表</h3>
+                <p class="mb-0 opacity-75">请评价您的父母在过去一年中对您参与体育活动的支持程度<br>
+                <small>1=从不  2=很少  3=有时  4=经常</small></p>
+            </div>
+            <div class="card-body">
+                <form action="/family_support_submit" method="POST">
+                    <input type="hidden" name="start_time" id="start_time">
+                    <div class="row mb-4">
+                        <div class="col-sm-6 mb-3 mb-sm-0">
+                            <label for="student_id" class="form-label fw-bold">学号 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="student_id" name="student_id" required>
+                        </div>
+                        <div class="col-sm-6">
+                            <label for="student_name" class="form-label fw-bold">姓名 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="student_name" name="student_name" required>
+                        </div>
+                    </div>
+
+                    <!-- 第1题：自己锻炼 -->
+                    <div class="section-title">🏃 运动参与</div>
+                    <div class="q-block">
+                        <p><span class="q-num">1</span> 你的<span class="parent-label mom">母亲</span>/<span class="parent-label dad">父亲</span>自己经常参加体育锻炼吗？</p>
+                        <div class="row g-2">
+                            <div class="col-sm-6">
+                                <span class="parent-label mom">母亲</span>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <input type="radio" class="btn-check" name="mother_self_ex" id="mse1" value="1" required>
+                                    <label class="btn btn-outline-secondary" for="mse1">从 不</label>
+                                    <input type="radio" class="btn-check" name="mother_self_ex" id="mse2" value="2">
+                                    <label class="btn btn-outline-secondary" for="mse2">很 少</label>
+                                    <input type="radio" class="btn-check" name="mother_self_ex" id="mse3" value="3">
+                                    <label class="btn btn-outline-secondary" for="mse3">有 时</label>
+                                    <input type="radio" class="btn-check" name="mother_self_ex" id="mse4" value="4">
+                                    <label class="btn btn-outline-secondary" for="mse4">经 常</label>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="parent-label dad">父亲</span>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <input type="radio" class="btn-check" name="father_self_ex" id="fse1" value="1" required>
+                                    <label class="btn btn-outline-secondary" for="fse1">从 不</label>
+                                    <input type="radio" class="btn-check" name="father_self_ex" id="fse2" value="2">
+                                    <label class="btn btn-outline-secondary" for="fse2">很 少</label>
+                                    <input type="radio" class="btn-check" name="father_self_ex" id="fse3" value="3">
+                                    <label class="btn btn-outline-secondary" for="fse3">有 时</label>
+                                    <input type="radio" class="btn-check" name="father_self_ex" id="fse4" value="4">
+                                    <label class="btn btn-outline-secondary" for="fse4">经 常</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 第2题：一起锻炼 -->
+                    <div class="q-block">
+                        <p><span class="q-num">2</span> 你的<span class="parent-label mom">母亲</span>/<span class="parent-label dad">父亲</span>与你一起参加体育锻炼吗？</p>
+                        <div class="row g-2">
+                            <div class="col-sm-6">
+                                <span class="parent-label mom">母亲</span>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <input type="radio" class="btn-check" name="mother_joint_ex" id="mje1" value="1" required><label class="btn btn-outline-secondary" for="mje1">从不</label>
+                                    <input type="radio" class="btn-check" name="mother_joint_ex" id="mje2" value="2"><label class="btn btn-outline-secondary" for="mje2">很少</label>
+                                    <input type="radio" class="btn-check" name="mother_joint_ex" id="mje3" value="3"><label class="btn btn-outline-secondary" for="mje3">有时</label>
+                                    <input type="radio" class="btn-check" name="mother_joint_ex" id="mje4" value="4"><label class="btn btn-outline-secondary" for="mje4">经常</label>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="parent-label dad">父亲</span>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <input type="radio" class="btn-check" name="father_joint_ex" id="fje1" value="1" required><label class="btn btn-outline-secondary" for="fje1">从不</label>
+                                    <input type="radio" class="btn-check" name="father_joint_ex" id="fje2" value="2"><label class="btn btn-outline-secondary" for="fje2">很少</label>
+                                    <input type="radio" class="btn-check" name="father_joint_ex" id="fje3" value="3"><label class="btn btn-outline-secondary" for="fje3">有时</label>
+                                    <input type="radio" class="btn-check" name="father_joint_ex" id="fje4" value="4"><label class="btn btn-outline-secondary" for="fje4">经常</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 第3题：邀请锻炼 -->
+                    <div class="q-block">
+                        <p><span class="q-num">3</span> 你的<span class="parent-label mom">母亲</span>/<span class="parent-label dad">父亲</span>邀请你一起去锻炼或运动吗？</p>
+                        <div class="row g-2">
+                            <div class="col-sm-6">
+                                <span class="parent-label mom">母亲</span>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <input type="radio" class="btn-check" name="mother_invites" id="mi1" value="1" required><label class="btn btn-outline-secondary" for="mi1">从不</label>
+                                    <input type="radio" class="btn-check" name="mother_invites" id="mi2" value="2"><label class="btn btn-outline-secondary" for="mi2">很少</label>
+                                    <input type="radio" class="btn-check" name="mother_invites" id="mi3" value="3"><label class="btn btn-outline-secondary" for="mi3">有时</label>
+                                    <input type="radio" class="btn-check" name="mother_invites" id="mi4" value="4"><label class="btn btn-outline-secondary" for="mi4">经常</label>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="parent-label dad">父亲</span>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <input type="radio" class="btn-check" name="father_invites" id="fi1" value="1" required><label class="btn btn-outline-secondary" for="fi1">从不</label>
+                                    <input type="radio" class="btn-check" name="father_invites" id="fi2" value="2"><label class="btn btn-outline-secondary" for="fi2">很少</label>
+                                    <input type="radio" class="btn-check" name="father_invites" id="fi3" value="3"><label class="btn btn-outline-secondary" for="fi3">有时</label>
+                                    <input type="radio" class="btn-check" name="father_invites" id="fi4" value="4"><label class="btn btn-outline-secondary" for="fi4">经常</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 第4题：接送 -->
+                    <div class="q-block">
+                        <p><span class="q-num">4</span> 你的<span class="parent-label mom">母亲</span>/<span class="parent-label dad">父亲</span>会专门接送你去运动或锻炼场所吗？</p>
+                        <div class="row g-2">
+                            <div class="col-sm-6">
+                                <span class="parent-label mom">母亲</span>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <input type="radio" class="btn-check" name="mother_transport" id="mt1" value="1" required><label class="btn btn-outline-secondary" for="mt1">从不</label>
+                                    <input type="radio" class="btn-check" name="mother_transport" id="mt2" value="2"><label class="btn btn-outline-secondary" for="mt2">很少</label>
+                                    <input type="radio" class="btn-check" name="mother_transport" id="mt3" value="3"><label class="btn btn-outline-secondary" for="mt3">有时</label>
+                                    <input type="radio" class="btn-check" name="mother_transport" id="mt4" value="4"><label class="btn btn-outline-secondary" for="mt4">经常</label>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="parent-label dad">父亲</span>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <input type="radio" class="btn-check" name="father_transport" id="ft1" value="1" required><label class="btn btn-outline-secondary" for="ft1">从不</label>
+                                    <input type="radio" class="btn-check" name="father_transport" id="ft2" value="2"><label class="btn btn-outline-secondary" for="ft2">很少</label>
+                                    <input type="radio" class="btn-check" name="father_transport" id="ft3" value="3"><label class="btn btn-outline-secondary" for="ft3">有时</label>
+                                    <input type="radio" class="btn-check" name="father_transport" id="ft4" value="4"><label class="btn btn-outline-secondary" for="ft4">经常</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 第5题：报班 -->
+                    <div class="q-block">
+                        <p><span class="q-num">5</span> 你的<span class="parent-label mom">母亲</span>/<span class="parent-label dad">父亲</span>为你报名参加运动培训班或体育俱乐部吗？</p>
+                        <div class="row g-2">
+                            <div class="col-sm-6">
+                                <span class="parent-label mom">母亲</span>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <input type="radio" class="btn-check" name="mother_registers" id="mr1" value="1" required><label class="btn btn-outline-secondary" for="mr1">从不</label>
+                                    <input type="radio" class="btn-check" name="mother_registers" id="mr2" value="2"><label class="btn btn-outline-secondary" for="mr2">很少</label>
+                                    <input type="radio" class="btn-check" name="mother_registers" id="mr3" value="3"><label class="btn btn-outline-secondary" for="mr3">有时</label>
+                                    <input type="radio" class="btn-check" name="mother_registers" id="mr4" value="4"><label class="btn btn-outline-secondary" for="mr4">经常</label>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="parent-label dad">父亲</span>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <input type="radio" class="btn-check" name="father_registers" id="fr1" value="1" required><label class="btn btn-outline-secondary" for="fr1">从不</label>
+                                    <input type="radio" class="btn-check" name="father_registers" id="fr2" value="2"><label class="btn btn-outline-secondary" for="fr2">很少</label>
+                                    <input type="radio" class="btn-check" name="father_registers" id="fr3" value="3"><label class="btn btn-outline-secondary" for="fr3">有时</label>
+                                    <input type="radio" class="btn-check" name="father_registers" id="fr4" value="4"><label class="btn btn-outline-secondary" for="fr4">经常</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 第6题：观看 -->
+                    <div class="q-block">
+                        <p><span class="q-num">6</span> 你的<span class="parent-label mom">母亲</span>/<span class="parent-label dad">父亲</span>会去观看你的运动或比赛吗？</p>
+                        <div class="row g-2">
+                            <div class="col-sm-6">
+                                <span class="parent-label mom">母亲</span>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <input type="radio" class="btn-check" name="mother_watches" id="mw1" value="1" required><label class="btn btn-outline-secondary" for="mw1">从不</label>
+                                    <input type="radio" class="btn-check" name="mother_watches" id="mw2" value="2"><label class="btn btn-outline-secondary" for="mw2">很少</label>
+                                    <input type="radio" class="btn-check" name="mother_watches" id="mw3" value="3"><label class="btn btn-outline-secondary" for="mw3">有时</label>
+                                    <input type="radio" class="btn-check" name="mother_watches" id="mw4" value="4"><label class="btn btn-outline-secondary" for="mw4">经常</label>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="parent-label dad">父亲</span>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <input type="radio" class="btn-check" name="father_watches" id="fw1" value="1" required><label class="btn btn-outline-secondary" for="fw1">从不</label>
+                                    <input type="radio" class="btn-check" name="father_watches" id="fw2" value="2"><label class="btn btn-outline-secondary" for="fw2">很少</label>
+                                    <input type="radio" class="btn-check" name="father_watches" id="fw3" value="3"><label class="btn btn-outline-secondary" for="fw3">有时</label>
+                                    <input type="radio" class="btn-check" name="father_watches" id="fw4" value="4"><label class="btn btn-outline-secondary" for="fw4">经常</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 第7-9题：限制行为（反向计分） -->
+                    <div class="section-title">📺 屏幕时间限制 <small class="text-muted">（⚠️ 请注意：此题反向计分）</small></div>
+
+                    <div class="q-block">
+                        <p><span class="q-num">7</span> 你的<span class="parent-label mom">母亲</span>/<span class="parent-label dad">父亲</span>会限制你看电视的时间吗？</p>
+                        <div class="row g-2">
+                            <div class="col-sm-6">
+                                <span class="parent-label mom">母亲</span>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <input type="radio" class="btn-check" name="mother_tv_limit" id="mtv1" value="1" required><label class="btn btn-outline-secondary" for="mtv1">从不</label>
+                                    <input type="radio" class="btn-check" name="mother_tv_limit" id="mtv2" value="2"><label class="btn btn-outline-secondary" for="mtv2">很少</label>
+                                    <input type="radio" class="btn-check" name="mother_tv_limit" id="mtv3" value="3"><label class="btn btn-outline-secondary" for="mtv3">有时</label>
+                                    <input type="radio" class="btn-check" name="mother_tv_limit" id="mtv4" value="4"><label class="btn btn-outline-secondary" for="mtv4">经常</label>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="parent-label dad">父亲</span>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <input type="radio" class="btn-check" name="father_tv_limit" id="ftv1" value="1" required><label class="btn btn-outline-secondary" for="ftv1">从不</label>
+                                    <input type="radio" class="btn-check" name="father_tv_limit" id="ftv2" value="2"><label class="btn btn-outline-secondary" for="ftv2">很少</label>
+                                    <input type="radio" class="btn-check" name="father_tv_limit" id="ftv3" value="3"><label class="btn btn-outline-secondary" for="ftv3">有时</label>
+                                    <input type="radio" class="btn-check" name="father_tv_limit" id="ftv4" value="4"><label class="btn btn-outline-secondary" for="ftv4">经常</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="q-block">
+                        <p><span class="q-num">8</span> 你的<span class="parent-label mom">母亲</span>/<span class="parent-label dad">父亲</span>会限制你用电脑的时间吗？</p>
+                        <div class="row g-2">
+                            <div class="col-sm-6">
+                                <span class="parent-label mom">母亲</span>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <input type="radio" class="btn-check" name="mother_computer_limit" id="mcl1" value="1" required><label class="btn btn-outline-secondary" for="mcl1">从不</label>
+                                    <input type="radio" class="btn-check" name="mother_computer_limit" id="mcl2" value="2"><label class="btn btn-outline-secondary" for="mcl2">很少</label>
+                                    <input type="radio" class="btn-check" name="mother_computer_limit" id="mcl3" value="3"><label class="btn btn-outline-secondary" for="mcl3">有时</label>
+                                    <input type="radio" class="btn-check" name="mother_computer_limit" id="mcl4" value="4"><label class="btn btn-outline-secondary" for="mcl4">经常</label>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="parent-label dad">父亲</span>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <input type="radio" class="btn-check" name="father_computer_limit" id="fcl1" value="1" required><label class="btn btn-outline-secondary" for="fcl1">从不</label>
+                                    <input type="radio" class="btn-check" name="father_computer_limit" id="fcl2" value="2"><label class="btn btn-outline-secondary" for="fcl2">很少</label>
+                                    <input type="radio" class="btn-check" name="father_computer_limit" id="fcl3" value="3"><label class="btn btn-outline-secondary" for="fcl3">有时</label>
+                                    <input type="radio" class="btn-check" name="father_computer_limit" id="fcl4" value="4"><label class="btn btn-outline-secondary" for="fcl4">经常</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="q-block">
+                        <p><span class="q-num">9</span> 你的<span class="parent-label mom">母亲</span>/<span class="parent-label dad">父亲</span>会限制你玩电子游戏的时间吗？</p>
+                        <div class="row g-2">
+                            <div class="col-sm-6">
+                                <span class="parent-label mom">母亲</span>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <input type="radio" class="btn-check" name="mother_game_limit" id="mgl1" value="1" required><label class="btn btn-outline-secondary" for="mgl1">从不</label>
+                                    <input type="radio" class="btn-check" name="mother_game_limit" id="mgl2" value="2"><label class="btn btn-outline-secondary" for="mgl2">很少</label>
+                                    <input type="radio" class="btn-check" name="mother_game_limit" id="mgl3" value="3"><label class="btn btn-outline-secondary" for="mgl3">有时</label>
+                                    <input type="radio" class="btn-check" name="mother_game_limit" id="mgl4" value="4"><label class="btn btn-outline-secondary" for="mgl4">经常</label>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <span class="parent-label dad">父亲</span>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <input type="radio" class="btn-check" name="father_game_limit" id="fgl1" value="1" required><label class="btn btn-outline-secondary" for="fgl1">从不</label>
+                                    <input type="radio" class="btn-check" name="father_game_limit" id="fgl2" value="2"><label class="btn btn-outline-secondary" for="fgl2">很少</label>
+                                    <input type="radio" class="btn-check" name="father_game_limit" id="fgl3" value="3"><label class="btn btn-outline-secondary" for="fgl3">有时</label>
+                                    <input type="radio" class="btn-check" name="father_game_limit" id="fgl4" value="4"><label class="btn btn-outline-secondary" for="fgl4">经常</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-submit">提交问卷</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.getElementById('start_time').value = new Date().toISOString();
+    </script>
+</body>
+</html>

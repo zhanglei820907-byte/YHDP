@@ -29,16 +29,19 @@
         .phq9   .card-top { background: #4a6cf7; }
         .gad7   .card-top { background: #f7931e; }
         .psqi   .card-top { background: #1b9e77; }
-        .kidmed .card-top { background: #E74C3C; }
+        .kidmed  .card-top { background: #E74C3C; }
+        .family  .card-top { background: #3B8BEA; }
         .btn-card { border-radius: 20px; font-weight: 600; padding: 6px 28px; }
-        .phq9   .btn-card { color: #4a6cf7; border-color: #4a6cf7; }
-        .gad7   .btn-card { color: #f7931e; border-color: #f7931e; }
-        .psqi   .btn-card { color: #1b9e77; border-color: #1b9e77; }
-        .kidmed .btn-card { color: #E74C3C; border-color: #E74C3C; }
-        .phq9   .btn-card:hover { background: #4a6cf7; color: white; }
-        .gad7   .btn-card:hover { background: #f7931e; color: white; }
-        .psqi   .btn-card:hover { background: #1b9e77; color: white; }
-        .kidmed .btn-card:hover { background: #E74C3C; color: white; }
+        .phq9    .btn-card { color: #4a6cf7; border-color: #4a6cf7; }
+        .gad7    .btn-card { color: #f7931e; border-color: #f7931e; }
+        .psqi    .btn-card { color: #1b9e77; border-color: #1b9e77; }
+        .kidmed  .btn-card { color: #E74C3C; border-color: #E74C3C; }
+        .family  .btn-card { color: #3B8BEA; border-color: #3B8BEA; }
+        .phq9    .btn-card:hover { background: #4a6cf7; color: white; }
+        .gad7    .btn-card:hover { background: #f7931e; color: white; }
+        .psqi    .btn-card:hover { background: #1b9e77; color: white; }
+        .kidmed  .btn-card:hover { background: #E74C3C; color: white; }
+        .family  .btn-card:hover { background: #3B8BEA; color: white; }
         .footer-links { text-align: center; margin-top: 28px; }
         .footer-links a { margin: 0 10px; color: #888; font-size: 0.85rem; }
     </style>
@@ -130,11 +133,32 @@
                     <span class="btn btn-outline-secondary btn-card" style="color:#E74C3C;border-color:#E74C3C;">开始填写 →</span>
                 </div>
             </a>
+
+            <!-- 家庭支持 卡片 -->
+            <a href="/family_support_survey" class="survey-card family">
+                <div class="card-top">
+                    <div class="icon">👨‍👩‍👧</div>
+                    <h5>家庭体力活动支持</h5>
+                    <div class="sub">Family Physical Activity Support</div>
+                </div>
+                <div class="card-body">
+                    <ul>
+                        <li>9 题 × 父母双方（18题）</li>
+                        <li>评估父母对运动的支持</li>
+                        <li>正向+反向计分（18-72）</li>
+                        <li>三级支持等级</li>
+                    </ul>
+                </div>
+                <div class="card-footer">
+                    <span class="btn btn-outline-secondary btn-card" style="color:#3B8BEA;border-color:#3B8BEA;">开始填写 →</span>
+                </div>
+            </a>
         </div>
 
         <div class="footer-links">
             <a href="/stats">📊 数据统计</a>
             <a href="/export">📥 导出 CSV</a>
+            <a href="/physical_input">🏋️ 体格测试</a>
         </div>
     </div>
 </body>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>体格测试 - 数据查看</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f0f2f5; padding-bottom: 40px; }
+        .container { max-width: 960px; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); margin-top: 20px; }
+        .card-header { background: #2C3E50; color: white; border-radius: 12px 12px 0 0; padding: 20px 24px; }
+        .table { font-size: 0.9rem; }
+        .badge-complete { background: #27ae60; }
+        .badge-incomplete { background: #e74c3c; }
+        .detail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+        .detail-item { background: #f8f9fa; border-radius: 6px; padding: 10px 14px; }
+        .detail-item .label { font-size: 0.75rem; color: #888; }
+        .detail-item .value { font-size: 1rem; font-weight: 600; color: #333; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-1">📊 体格测试数据</h4>
+                    <p class="mb-0 opacity-75">教师端数据查看</p>
+                </div>
+                <a href="/physical_input" class="btn btn-light btn-sm">+ 新增录入</a>
+            </div>
+            <div class="card-body">
+                {% if message %}
+                <div class="alert alert-success">{{ message }}</div>
+                {% endif %}
+
+                {% if detail %}
+                <!-- 详情视图 -->
+                <h5 class="mb-3">📋 记录详情 <span class="text-muted small">#{{ detail.id }}</span></h5>
+                <a href="/physical_view" class="btn btn-outline-secondary btn-sm mb-3">← 返回列表</a>
+
+                <div class="row mb-3">
+                    <div class="col-sm-6">
+                        <strong>学号：</strong>{{ detail.student_id }}<br>
+                        <strong>姓名：</strong>{{ detail.student_name }}<br>
+                        <strong>UID：</strong>{{ detail.uid or '-' }}
+                    </div>
+                    <div class="col-sm-6">
+                        <strong>测量日期：</strong>{{ detail.measure_date or '-' }}<br>
+                        <strong>测量人员：</strong>{{ detail.measure_operator or '-' }}<br>
+                        <strong>数据完整度：</strong>
+                        <span class="badge {% if detail.data_complete %}badge-complete{% else %}badge-incomplete{% endif %}">
+                            {{ '完整' if detail.data_complete else '有缺失' }}
+                        </span>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold text-secondary">💪 握力数据 (kg)</h6>
+                <div class="detail-grid mb-3">
+                    <div class="detail-item"><div class="label">左手-第1次</div><div class="value">{{ detail.grip_left_1 or '-' }}</div></div>
+                    <div class="detail-item"><div class="label">左手-第2次</div><div class="value">{{ detail.grip_left_2 or '-' }}</div></div>
+                    <div class="detail-item"><div class="label">左手-第3次</div><div class="value">{{ detail.grip_left_3 or '-' }}</div></div>
+                    <div class="detail-item"><div class="label">右手-第1次</div><div class="value">{{ detail.grip_right_1 or '-' }}</div></div>
+                    <div class="detail-item"><div class="label">右手-第2次</div><div class="value">{{ detail.grip_right_2 or '-' }}</div></div>
+                    <div class="detail-item"><div class="label">右手-第3次</div><div class="value">{{ detail.grip_right_3 or '-' }}</div></div>
+                    <div class="detail-item"><div class="label">左手最佳</div><div class="value">{{ detail.grip_left_best or '-' }}</div></div>
+                    <div class="detail-item"><div class="label">右手最佳</div><div class="value">{{ detail.grip_right_best or '-' }}</div></div>
+                    <div class="detail-item"><div class="label">双手均值</div><div class="value">{{ detail.grip_avg_best or '-' }}</div></div>
+                    <div class="detail-item"><div class="label">优势手</div><div class="value">{{ '左手' if detail.grip_dominant == 1 else '右手' if detail.grip_dominant == 2 else '-' }}</div></div>
+                </div>
+
+                <h6 class="fw-bold text-secondary">📏 腰围</h6>
+                <div class="detail-grid mb-3">
+                    <div class="detail-item"><div class="label">腰围</div><div class="value">{{ detail.waist_circ or '-' }} cm</div></div>
+                </div>
+
+                <h6 class="fw-bold text-secondary">⚖️ 体脂称数据</h6>
+                <div class="detail-grid mb-3">
+                    <div class="detail-item"><div class="label">体重</div><div class="value">{{ detail.weight or '-' }} kg</div></div>
+                    <div class="detail-item"><div class="label">BMI</div><div class="value">{{ detail.bmi or '-' }}</div></div>
+                    <div class="detail-item"><div class="label">体脂率</div><div class="value">{{ detail.body_fat_rate or '-' }}%</div></div>
+                    <div class="detail-item"><div class="label">体脂量</div><div class="value">{{ detail.body_fat_mass or '-' }} kg</div></div>
+                    <div class="detail-item"><div class="label">肌肉量</div><div class="value">{{ detail.muscle_mass or '-' }} kg</div></div>
+                    <div class="detail-item"><div class="label">骨骼肌</div><div class="value">{{ detail.skeletal_muscle or '-' }} kg</div></div>
+                    <div class="detail-item"><div class="label">骨量</div><div class="value">{{ detail.bone_mass or '-' }} kg</div></div>
+                    <div class="detail-item"><div class="label">体水分率</div><div class="value">{{ detail.body_water_rate or '-' }}%</div></div>
+                    <div class="detail-item"><div class="label">体水分量</div><div class="value">{{ detail.body_water_mass or '-' }} kg</div></div>
+                    <div class="detail-item"><div class="label">蛋白质率</div><div class="value">{{ detail.protein_rate or '-' }}%</div></div>
+                    <div class="detail-item"><div class="label">蛋白质量</div><div class="value">{{ detail.protein_mass or '-' }} kg</div></div>
+                    <div class="detail-item"><div class="label">基础代谢</div><div class="value">{{ detail.bmr or '-' }} kcal</div></div>
+                    <div class="detail-item"><div class="label">内脏脂肪</div><div class="value">{{ detail.visceral_fat or '-' }}</div></div>
+                    <div class="detail-item"><div class="label">皮下脂肪率</div><div class="value">{{ detail.subcut_fat_rate or '-' }}%</div></div>
+                    <div class="detail-item"><div class="label">身体年龄</div><div class="value">{{ detail.body_age or '-' }}</div></div>
+                    <div class="detail-item"><div class="label">身体类型</div><div class="value">{{ {1:'偏瘦',2:'标准',3:'偏胖',4:'肥胖'}.get(detail.body_type, detail.body_type or '-') }}</div></div>
+                    <div class="detail-item"><div class="label">心率</div><div class="value">{{ detail.heart_rate or '-' }} bpm</div></div>
+                    <div class="detail-item"><div class="label">身体评分</div><div class="value">{{ detail.body_score or '-' }}</div></div>
+                </div>
+
+                {% if detail.data_quality_note %}
+                <div class="alert alert-warning"><strong>备注：</strong>{{ detail.data_quality_note }}</div>
+                {% endif %}
+
+                {% else %}
+                <!-- 列表视图 -->
+                {% if records %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>学号</th>
+                                <th>姓名</th>
+                                <th>测量日期</th>
+                                <th>测量人员</th>
+                                <th>数据完整度</th>
+                                <th>录入时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in records %}
+                            <tr>
+                                <td>{{ r.id }}</td>
+                                <td>{{ r.student_id }}</td>
+                                <td>{{ r.student_name }}</td>
+                                <td>{{ r.measure_date or '-' }}</td>
+                                <td>{{ r.measure_operator or '-' }}</td>
+                                <td>
+                                    <span class="badge {% if r.data_complete %}badge-complete{% else %}badge-incomplete{% endif %}">
+                                        {{ '完整' if r.data_complete else '缺失' }}
+                                    </span>
+                                </td>
+                                <td class="small text-muted">{{ r.measure_time[:19] if r.measure_time else '-' }}</td>
+                                <td>
+                                    <a href="/physical_view/{{ r.id }}" class="btn btn-outline-secondary btn-sm">详情</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5 text-muted">
+                    <p class="fs-5">暂无体测数据</p>
+                    <a href="/physical_input" class="btn btn-primary mt-2" style="background:#2C3E50;border-color:#2C3E50;">前往录入</a>
+                </div>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

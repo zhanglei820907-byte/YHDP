@@ -42,11 +42,20 @@
             <div class="col-3"><div class="card text-center shadow-sm"><div class="card-body py-3"><div class="fs-3 fw-bold text-info">{{ kidmed_avg }}</div><div class="text-muted small">有效平均分</div></div></div></div>
         </div>
 
+        <h4 class="mb-3">家庭体力活动支持量表</h4>
+        <div class="row g-3 mb-4">
+            <div class="col-3"><div class="card text-center shadow-sm"><div class="card-body py-3"><div class="fs-3 fw-bold" style="color: #3B8BEA;">{{ family_total }}</div><div class="text-muted small">总提交数</div></div></div></div>
+            <div class="col-3"><div class="card text-center shadow-sm"><div class="card-body py-3"><div class="fs-3 fw-bold text-success">{{ family_valid }}</div><div class="text-muted small">有效问卷</div></div></div></div>
+            <div class="col-3"><div class="card text-center shadow-sm"><div class="card-body py-3"><div class="fs-3 fw-bold text-danger">{{ family_invalid }}</div><div class="text-muted small">无效问卷</div></div></div></div>
+            <div class="col-3"><div class="card text-center shadow-sm"><div class="card-body py-3"><div class="fs-3 fw-bold text-info">{{ family_avg }}</div><div class="text-muted small">有效平均分</div></div></div></div>
+        </div>
+
         <div class="text-center mt-4">
             <a href="/survey" class="btn btn-primary me-2">PHQ-9 问卷</a>
             <a href="/gad7_survey" class="btn btn-warning me-2">GAD-7 问卷</a>
             <a href="/psqi_survey" class="btn me-2" style="background: #1b9e77; color: white;">PSQI 问卷</a>
             <a href="/kidmed_survey" class="btn me-2" style="background: #E74C3C; color: white;">KIDMED 问卷</a>
+            <a href="/family_support_survey" class="btn me-2" style="background: #3B8BEA; color: white;">家庭支持</a>
             <a href="/export" class="btn btn-outline-secondary">导出 CSV</a>
         </div>
     </div>

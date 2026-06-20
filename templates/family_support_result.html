@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>提交结果 - 家庭支持</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light d-flex align-items-center justify-content-center vh-100">
+    <div class="card shadow-sm" style="max-width: 480px; width: 100%;">
+        <div class="card-body text-center p-4">
+            <h3 class="text-success mb-3">✅ 提交成功</h3>
+            <div class="display-4 fw-bold my-3" style="color: #3B8BEA;">{{ family_total }}</div>
+            <p class="text-muted">家庭支持总分（满分 72）</p>
+            <div class="row g-2 mb-2 text-start">
+                <div class="col-6">
+                    <div class="p-2 rounded" style="background:#fce4ec;">
+                        <small class="text-muted">母亲支持</small><br>
+                        <strong style="color:#c62828;">{{ mother_total }} / 36</strong>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-2 rounded" style="background:#e3f2fd;">
+                        <small class="text-muted">父亲支持</small><br>
+                        <strong style="color:#1565c0;">{{ father_total }} / 36</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="alert alert-info"><strong>支持等级：</strong>{{ risk_level }}</div>
+            <div class="alert {% if valid_flag %}alert-success{% else %}alert-danger{% endif %}">
+                <strong>数据有效性：</strong>{% if valid_flag %}有效{% else %}无效（答题过快）{% endif %}
+            </div>
+            <div class="text-muted small mb-3">
+                <strong>您的 UID：</strong><code>{{ uid }}</code>
+            </div>
+            <a href="/family_support_survey" class="btn mt-2" style="background: #3B8BEA; color: white;">返回问卷</a>
+        </div>
+    </div>
+</body>
+</html>
