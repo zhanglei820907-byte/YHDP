@@ -224,6 +224,21 @@ def init_db():
         )
     """)
 
+    # 科学锻炼知识库
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS knowledge_base (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            content TEXT NOT NULL,
+            tags TEXT,
+            category TEXT NOT NULL,
+            video_url TEXT,
+            image_url TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
     conn.commit()
 
     # 插入预置规则（如不存在）
@@ -1148,6 +1163,116 @@ def cognition_submit():
         total_score=total, risk_level=risk_level,
         valid_flag=valid_flag, uid=uid
     )
+
+
+# ============================================================
+# ============================================================
+#  科学锻炼知识库管理
+# ============================================================
+
+KB_CATEGORIES = [
+    "力量训练", "有氧运动", "柔韧性", "运动康复",
+    "营养建议", "心理健康", "睡眠改善", "综合健康",
+]
+
+
+@app.route("/kb")
+def kb_list():
+    """知识库列表"""
+    search = request.args.get("search", "").strip()
+    category = request.args.get("category", "").strip()
+
+    conn = get_db()
+    query = "SELECT * FROM knowledge_base WHERE 1=1"
+    params = []
+    if search:
+        query += " AND (title LIKE ? OR tags LIKE ?)"
+        params.extend([f"%{search}%", f"%{search}%"])
+    if category:
+        query += " AND category = ?"
+        params.append(category)
+    query += " ORDER BY created_at DESC"
+    items = conn.execute(query, params).fetchall()
+    conn.close()
+
+    return render_template("kb_list.html", items=items, categories=KB_CATEGORIES,
+                           filters={"search": search, "category": category})
+
+
+@app.route("/kb/view/<int:item_id>")
+def kb_view(item_id):
+    """查看知识详情"""
+    conn = get_db()
+    item = conn.execute("SELECT * FROM knowledge_base WHERE id = ?", (item_id,)).fetchone()
+    conn.close()
+    if not item:
+        return "知识条目不存在", 404
+    return render_template("kb_detail.html", item=item)
+
+
+@app.route("/kb/add", methods=["GET", "POST"])
+def kb_add():
+    """新增知识条目"""
+    if request.method == "POST":
+        conn = get_db()
+        conn.execute(
+            """INSERT INTO knowledge_base
+               (title, content, tags, category, video_url, image_url)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (
+                request.form.get("title", "").strip(),
+                request.form.get("content", "").strip(),
+                request.form.get("tags", "").strip(),
+                request.form.get("category", "").strip(),
+                request.form.get("video_url", "").strip() or None,
+                request.form.get("image_url", "").strip() or None,
+            )
+        )
+        conn.commit()
+        conn.close()
+        return redirect(url_for("kb_list"))
+    return render_template("kb_add_edit.html", item=None, categories=KB_CATEGORIES)
+
+
+@app.route("/kb/edit/<int:item_id>", methods=["GET", "POST"])
+def kb_edit(item_id):
+    """编辑知识条目"""
+    conn = get_db()
+    if request.method == "POST":
+        conn.execute(
+            """UPDATE knowledge_base SET
+               title=?, content=?, tags=?, category=?, video_url=?, image_url=?,
+               updated_at=?
+               WHERE id=?""",
+            (
+                request.form.get("title", "").strip(),
+                request.form.get("content", "").strip(),
+                request.form.get("tags", "").strip(),
+                request.form.get("category", "").strip(),
+                request.form.get("video_url", "").strip() or None,
+                request.form.get("image_url", "").strip() or None,
+                datetime.now(timezone.utc).isoformat(),
+                item_id,
+            )
+        )
+        conn.commit()
+        conn.close()
+        return redirect(url_for("kb_list"))
+    item = conn.execute("SELECT * FROM knowledge_base WHERE id = ?", (item_id,)).fetchone()
+    conn.close()
+    if not item:
+        return "知识条目不存在", 404
+    return render_template("kb_add_edit.html", item=item, categories=KB_CATEGORIES)
+
+
+@app.route("/kb/delete/<int:item_id>", methods=["POST"])
+def kb_delete(item_id):
+    """删除知识条目"""
+    conn = get_db()
+    conn.execute("DELETE FROM knowledge_base WHERE id = ?", (item_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for("kb_list"))
 
 
 # ============================================================
