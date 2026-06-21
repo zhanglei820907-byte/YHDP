@@ -4,9 +4,10 @@ import random
 import sqlite3
 import time
 from datetime import datetime, timezone
-from flask import Flask, render_template, request, make_response
+from flask import Flask, render_template, request, make_response, session, redirect, url_for
 
 app = Flask(__name__)
+app.secret_key = "yhdp_secret_key_2026_health_profile"
 
 DATABASE = "database.db"
 
@@ -65,6 +66,12 @@ def init_db():
             first_submit_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    # 迁移: 为已有 students 表添加 birth_date 和 last_login 列
+    for col, col_type in [("birth_date", "TEXT"), ("last_login", "DATETIME")]:
+        try:
+            cursor.execute(f"ALTER TABLE students ADD COLUMN {col} {col_type}")
+        except sqlite3.OperationalError:
+            pass  # 列已存在
 
     # PSQI 匹兹堡睡眠质量指数答案表
     cursor.execute("""
@@ -1025,6 +1032,201 @@ def cognition_submit():
         total_score=total, risk_level=risk_level,
         valid_flag=valid_flag, uid=uid
     )
+
+
+# ============================================================
+#  学生健康档案（一生一档 Phase 1）
+# ============================================================
+
+@app.route("/my_health_login", methods=["GET", "POST"])
+def my_health_login():
+    """学生健康档案登录页"""
+    error = None
+    if request.method == "POST":
+        student_id = request.form.get("student_id", "").strip()
+        birth_date = request.form.get("birth_date", "").strip()
+
+        if not student_id or not birth_date:
+            error = "请填写学号和出生日期"
+        else:
+            conn = get_db()
+            student = conn.execute(
+                "SELECT * FROM students WHERE student_id = ?", (student_id,)
+            ).fetchone()
+
+            if not student:
+                conn.close()
+                error = "学号或出生日期错误"
+            elif student["birth_date"] is None or student["birth_date"] == "":
+                # 学号存在但无出生日期 → 先存 session 跳转设置页
+                conn.close()
+                session["pending_student_id"] = student_id
+                return redirect(url_for("my_health_setup"))
+            elif student["birth_date"] == birth_date:
+                # 更新最后登录时间
+                conn.execute(
+                    "UPDATE students SET last_login = ? WHERE student_id = ?",
+                    (datetime.now(timezone.utc).isoformat(), student_id),
+                )
+                conn.commit()
+                conn.close()
+                session["student_id"] = student_id
+                session.pop("pending_student_id", None)
+                return redirect(url_for("my_health"))
+            else:
+                conn.close()
+                error = "学号或出生日期错误"
+
+    return render_template("login.html", error=error)
+
+
+@app.route("/my_health_setup", methods=["GET", "POST"])
+def my_health_setup():
+    """首次设置出生日期"""
+    pending_id = session.get("pending_student_id")
+    logged_id = session.get("student_id")
+    student_id = pending_id or logged_id
+
+    if not student_id:
+        return redirect(url_for("my_health_login"))
+
+    conn = get_db()
+    student = conn.execute(
+        "SELECT * FROM students WHERE student_id = ?", (student_id,)
+    ).fetchone()
+
+    if not student:
+        conn.close()
+        return redirect(url_for("my_health_login"))
+
+    if request.method == "POST":
+        birth_date = request.form.get("birth_date", "").strip()
+        if not birth_date:
+            conn.close()
+            return render_template("my_health_setup.html", student=student, error="请选择出生日期")
+
+        conn.execute(
+            "UPDATE students SET birth_date = ? WHERE student_id = ?",
+            (birth_date, student_id),
+        )
+        conn.commit()
+        conn.close()
+        session["student_id"] = student_id
+        session.pop("pending_student_id", None)
+        return redirect(url_for("my_health"))
+
+    conn.close()
+    return render_template("my_health_setup.html", student=student, error=None)
+
+
+@app.route("/my_health")
+def my_health():
+    """个人健康档案首页"""
+    student_id = session.get("student_id")
+    if not student_id:
+        return redirect(url_for("my_health_login"))
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # 学生信息
+    student = cursor.execute(
+        "SELECT * FROM students WHERE student_id = ?", (student_id,)
+    ).fetchone()
+    if not student:
+        conn.close()
+        session.clear()
+        return redirect(url_for("my_health_login"))
+
+    # ---- 聚合各量表数据 ----
+    def fetch_scale(table, order_by="id ASC"):
+        return cursor.execute(
+            f"SELECT * FROM {table} WHERE student_id = ? ORDER BY {order_by}", (student_id,)
+        ).fetchall()
+
+    phq9_data = fetch_scale("answers")
+    gad7_data = fetch_scale("gad7_answers")
+    psqi_data = fetch_scale("psqi_answers")
+    kidmed_data = fetch_scale("kidmed_answers")
+    family_data = fetch_scale("family_support_answers")
+    cognition_data = fetch_scale("cognition_answers")
+    physical_data = cursor.execute(
+        "SELECT * FROM physical_measurements WHERE student_id = ? ORDER BY measure_date ASC, id ASC",
+        (student_id,)
+    ).fetchall()
+
+    # ---- 辅助函数 ----
+    def latest(rows, key="total_score"):
+        return rows[-1] if rows else None
+
+    def trend(rows, key="total_score"):
+        """返回 [(label, score), ...] 用于 Chart.js"""
+        result = []
+        for r in rows:
+            label = (r["time_end"] if "time_end" in r.keys() else
+                     r["created_at"] if "created_at" in r.keys() else
+                     r["measure_date"] if "measure_date" in r.keys() else "")
+            if isinstance(label, str) and "T" in label:
+                label = label[:10]
+            val = r[key] if key in r.keys() else 0
+            result.append((str(label or ""), val))
+        return result
+
+    # ---- 构建模板数据 ----
+    scales = {}
+
+    for slug, data, score_key, label, color, date_key in [
+        ("phq9", phq9_data, "total_score", "PHQ-9 抑郁", "#4a6cf7", "time_end"),
+        ("gad7", gad7_data, "total_score", "GAD-7 焦虑", "#f7931e", "time_end"),
+        ("psqi", psqi_data, "total_score", "PSQI 睡眠", "#1b9e77", "time_end"),
+        ("kidmed", kidmed_data, "total_score", "KIDMED 饮食", "#E74C3C", "time_end"),
+        ("family", family_data, "family_total", "家庭支持", "#3B8BEA", "time_end"),
+        ("cognition", cognition_data, "total_score", "运动认知", "#8E44AD", "time_end"),
+    ]:
+        latest_row = latest(data, key=score_key)
+        scales[slug] = {
+            "label": label,
+            "color": color,
+            "count": len(data),
+            "latest": latest_row,
+            "score": latest_row[score_key] if latest_row else None,
+            "risk": latest_row["risk_level"] if latest_row else None,
+            "date": (latest_row["time_end"] if latest_row else None) or "",
+            "trend": trend(data, key=score_key),
+            "rows": data,
+            "score_key": score_key,
+            "date_key": date_key,
+        }
+
+    # 体格数据
+    latest_phys = physical_data[-1] if physical_data else None
+    phys = {
+        "count": len(physical_data),
+        "latest": latest_phys,
+        "bmi": latest_phys["bmi"] if latest_phys else None,
+        "body_fat_rate": latest_phys["body_fat_rate"] if latest_phys else None,
+        "weight": latest_phys["weight"] if latest_phys else None,
+        "waist_circ": latest_phys["waist_circ"] if latest_phys else None,
+        "muscle_mass": latest_phys["muscle_mass"] if latest_phys else None,
+        "body_score": latest_phys["body_score"] if latest_phys else None,
+    }
+
+    conn.close()
+
+    return render_template(
+        "my_health.html",
+        student=student,
+        scales=scales,
+        phys=phys,
+        physical_count=len(physical_data),
+    )
+
+
+@app.route("/my_health_logout")
+def my_health_logout():
+    """退出健康档案"""
+    session.clear()
+    return redirect(url_for("my_health_login"))
 
 
 # ============================================================

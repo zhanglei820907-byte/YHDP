@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ student.student_name }} - 健康档案</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background: #f0f2f5; padding-bottom: 40px; }
+        .container { max-width: 960px; }
+        .profile-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 16px; padding: 24px 28px; margin: 20px 0; }
+        .metric-card { border: none; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); text-align: center; padding: 16px 12px; background: white; }
+        .metric-card .value { font-size: 1.8rem; font-weight: 700; }
+        .metric-card .label { font-size: 0.8rem; color: #888; }
+        .section-title { font-weight: 700; color: #333; margin: 28px 0 14px; padding-bottom: 6px; border-bottom: 2px solid #e0e0e0; }
+        .chart-box { background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); padding: 18px; margin-bottom: 16px; }
+        .chart-box canvas { max-height: 260px; }
+        .detail-table { font-size: 0.85rem; background: white; border-radius: 12px; overflow: hidden; }
+        .disclaimer-bar { background: #fff3cd; color: #856404; font-size: 0.8rem; text-align: center; padding: 8px 16px; border-radius: 8px; margin: 8px 0; }
+        .no-data { color: #aaa; font-style: italic; text-align: center; padding: 30px; }
+        .accordion-button { font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部欢迎条 -->
+        <div class="profile-header d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-1">👋 您好，{{ student.student_name }}</h4>
+                <small class="opacity-75">学号：{{ student.student_id }} · UID：{{ student.uid }}</small>
+            </div>
+            <a href="/my_health_logout" class="btn btn-light btn-sm">退出登录</a>
+        </div>
+
+        <div class="disclaimer-bar">
+            ⚠️ 免责声明：本档案数据仅供参考与健康管理，不能替代专业医疗诊断。如有健康疑虑，请咨询专业医师。
+        </div>
+
+        <!-- 第一部分：综合健康画像 -->
+        <div class="section-title">📊 综合健康画像</div>
+        <div class="row g-3">
+            {% for slug, s in scales.items() %}
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="metric-card">
+                    <div class="label">{{ s.label }}</div>
+                    <div class="value" style="color:{{ s.color }}">
+                        {{ s.score if s.score is not none else '-' }}
+                    </div>
+                    <div class="small mt-1" style="color:{{ s.color }}">{{ s.risk if s.risk else '暂无' }}</div>
+                    <div class="text-muted" style="font-size:0.7rem;">{{ s.date[:10] if s.date else '无记录' }}</div>
+                </div>
+            </div>
+            {% endfor %}
+            <!-- 体格指标 -->
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="metric-card">
+                    <div class="label">BMI / 体脂</div>
+                    <div class="value" style="color:#2C3E50">
+                        {{ '%.1f'|format(phys.bmi) if phys.bmi is not none else '-' }}
+                    </div>
+                    <div class="small mt-1 text-muted">
+                        体脂 {{ '%.1f'|format(phys.body_fat_rate)|string + '%' if phys.body_fat_rate is not none else '-' }}
+                    </div>
+                    <div class="text-muted" style="font-size:0.7rem;">{{ phys.latest.measure_date if phys.latest else '无记录' }}</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="metric-card">
+                    <div class="label">体重 / 腰围</div>
+                    <div class="value" style="color:#2C3E50">
+                        {{ '%.1f'|format(phys.weight) if phys.weight is not none else '-' }}
+                    </div>
+                    <div class="small mt-1 text-muted">
+                        腰围 {{ '%.1f'|format(phys.waist_circ)|string + 'cm' if phys.waist_circ is not none else '-' }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第二部分：历史趋势图 -->
+        <div class="section-title">📈 历史趋势</div>
+        <div class="row g-3">
+            {% for slug, s in scales.items() %}
+            <div class="col-md-6">
+                <div class="chart-box">
+                    <h6 style="color:{{ s.color }}">{{ s.label }} 趋势</h6>
+                    {% if s.count >= 2 %}
+                    <canvas id="chart_{{ slug }}"></canvas>
+                    {% else %}
+                    <div class="no-data">
+                        📭 暂无足够数据进行趋势分析<br><small>请等待下次测量</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- 第三部分：详细数据 -->
+        <div class="section-title">📋 详细记录</div>
+        <div class="accordion" id="detailAccordion">
+            {% for slug, s in scales.items() %}
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse_{{ slug }}">
+                        <span style="color:{{ s.color }};font-weight:700;">{{ s.label }}</span>
+                        <span class="ms-2 text-muted small">（{{ s.count }} 条记录）</span>
+                    </button>
+                </h2>
+                <div id="collapse_{{ slug }}" class="accordion-collapse collapse" data-bs-parent="#detailAccordion">
+                    <div class="accordion-body p-0">
+                        {% if s.count > 0 %}
+                        <table class="table table-sm detail-table mb-0">
+                            <thead class="table-light"><tr><th>日期</th><th>得分</th><th>等级</th><th>有效</th></tr></thead>
+                            <tbody>
+                                {% for row in s.rows %}
+                                <tr>
+                                    <td>{{ (row[s.date_key] or '')[:10] }}</td>
+                                    <td><strong>{{ row[s.score_key] }}</strong></td>
+                                    <td>{{ row.risk_level }}</td>
+                                    <td>{{ '✅' if row.valid_flag else '⚠️' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="disclaimer-bar mt-3">
+            ⚠️ 免责声明：本档案数据仅供参考与健康管理，不能替代专业医疗诊断。如有健康疑虑，请咨询专业医师。
+        </div>
+    </div>
+
+    <!-- Chart.js 渲染 (仅 ≥2 条记录的量表) -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const scaleData = {
+            {% for slug, s in scales.items() %}
+            {% if s.count >= 2 %}
+            "{{ slug }}": {
+                labels: [{% for pt in s.trend %}"{{ pt[0][:10] }}"{% if not loop.last %},{% endif %}{% endfor %}],
+                values: [{% for pt in s.trend %}{{ pt[1] }}{% if not loop.last %},{% endif %}{% endfor %}],
+                color: "{{ s.color }}",
+                label: "{{ s.label }}"
+            },
+            {% endif %}
+            {% endfor %}
+        };
+
+        Object.entries(scaleData).forEach(([slug, d]) => {
+            const ctx = document.getElementById('chart_' + slug);
+            if (!ctx) return;
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: d.labels,
+                    datasets: [{
+                        label: d.label,
+                        data: d.values,
+                        borderColor: d.color,
+                        backgroundColor: d.color + '20',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 4,
+                        pointBackgroundColor: d.color
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                        x: { ticks: { maxTicksLimit: 8 } }
+                    }
+                }
+            });
+        });
+    });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

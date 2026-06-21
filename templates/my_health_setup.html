@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>设置出生日期 - 健康档案</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; }
+        .card { max-width: 440px; width: 100%; margin: auto; border: none; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
+        .card-body { padding: 36px 32px; }
+        .btn-save { width: 100%; padding: 12px; font-weight: 600; border-radius: 8px; background: #667eea; border: none; color: white; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="card-body text-center">
+            <span style="font-size:2.5rem;">🔐</span>
+            <h4 class="mt-2">首次使用 — 设置出生日期</h4>
+            <p class="text-muted small">您好，<strong>{{ student.student_name }}</strong>（{{ student.student_id }}）</p>
+            <p class="text-muted small">为了验证您的身份，请设置出生日期。此日期将用于后续登录验证。</p>
+
+            {% if error %}
+            <div class="alert alert-danger py-2 small">{{ error }}</div>
+            {% endif %}
+
+            <form method="POST">
+                <div class="mb-3">
+                    <input type="date" name="birth_date" class="form-control" required autofocus>
+                </div>
+                <button type="submit" class="btn btn-save">✅ 确认并进入档案</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
