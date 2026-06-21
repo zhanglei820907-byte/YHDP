@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大学生体质测试 - 数据录入</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f0f2f5; padding-bottom: 40px; }
+        .container { max-width: 900px; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); margin-top: 20px; }
+        .card-header { background: #e67e22; color: white; border-radius: 12px 12px 0 0; padding: 20px 24px; }
+        .section-title { font-size: 0.95rem; font-weight: 700; color: #e67e22; margin: 20px 0 10px; padding-bottom: 4px; border-bottom: 2px solid #eee; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div><h4 class="mb-1">🏃 大学生体质测试数据录入</h4><p class="mb-0 opacity-75 small">国家学生体质健康标准</p></div>
+                <a href="/fitness_view" class="btn btn-light btn-sm">📋 查看记录</a>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/fitness_submit" id="mainForm">
+                    <!-- 检索区 -->
+                    <div class="row g-2 align-items-end mb-3 p-3 bg-light rounded">
+                        <div class="col-sm-4">
+                            <label class="form-label small fw-bold">检索学号</label>
+                            <input type="text" id="search_id" class="form-control form-control-sm" placeholder="输入学号">
+                        </div>
+                        <div class="col-sm-2">
+                            <button type="button" class="btn btn-warning btn-sm w-100" onclick="searchStudent()">🔍 检索</button>
+                        </div>
+                        <div class="col-sm-6"><div id="searchResult"></div></div>
+                    </div>
+                    <input type="hidden" name="student_id" id="student_id">
+                    <input type="hidden" name="student_name" id="student_name">
+                    <input type="hidden" name="gender" id="gender">
+
+                    <!-- 基础信息 -->
+                    <div class="section-title">📅 基本信息</div>
+                    <div class="row g-2">
+                        <div class="col-sm-3">
+                            <label class="form-label small">学年</label>
+                            <select name="academic_year" class="form-select form-select-sm">
+                                {% for y in ['2022-2023','2023-2024','2024-2025','2025-2026'] %}
+                                <option value="{{ y }}" {% if y=='2024-2025' %}selected{% endif %}>{{ y }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-sm-2">
+                            <label class="form-label small">学期</label>
+                            <select name="semester" class="form-select form-select-sm">
+                                <option value="秋季">秋季</option><option value="春季">春季</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-3">
+                            <label class="form-label small">测试日期</label>
+                            <input type="date" name="test_date" class="form-control form-control-sm" id="testDate">
+                        </div>
+                    </div>
+
+                    <!-- 身体形态 -->
+                    <div class="section-title">📏 身体形态</div>
+                    <div class="row g-2">
+                        <div class="col-sm-3"><label class="form-label small">身高 (cm)</label><input type="number" step="0.1" name="height" class="form-control form-control-sm"></div>
+                        <div class="col-sm-3"><label class="form-label small">体重 (kg)</label><input type="number" step="0.1" name="weight" class="form-control form-control-sm"></div>
+                    </div>
+
+                    <!-- 生理机能 -->
+                    <div class="section-title">🫁 生理机能</div>
+                    <div class="row g-2">
+                        <div class="col-sm-3"><label class="form-label small">肺活量 (ml)</label><input type="number" name="vital_capacity" class="form-control form-control-sm"></div>
+                    </div>
+
+                    <!-- 柔韧力量 -->
+                    <div class="section-title">🤸 柔韧与力量</div>
+                    <div class="row g-2">
+                        <div class="col-sm-3"><label class="form-label small">坐位体前屈 (cm)</label><input type="number" step="0.1" name="sit_reach" class="form-control form-control-sm"></div>
+                        <div class="col-sm-3"><label class="form-label small">立定跳远 (cm)</label><input type="number" step="0.1" name="standing_jump" class="form-control form-control-sm"></div>
+                    </div>
+
+                    <!-- 力量耐力 -->
+                    <div class="section-title">💪 力量耐力</div>
+                    <div class="row g-2">
+                        <div class="col-sm-3" id="situp_container" style="display:none;">
+                            <label class="form-label small">仰卧起坐 (次/分)</label>
+                            <input type="number" name="situp" class="form-control form-control-sm" placeholder="仅女生填写">
+                        </div>
+                        <div class="col-sm-3" id="pullup_container" style="display:none;">
+                            <label class="form-label small">引体向上 (次)</label>
+                            <input type="number" name="pullup" class="form-control form-control-sm" placeholder="仅男生填写">
+                        </div>
+                        <div class="col-sm-6" id="gender_hint" style="display:block;">
+                            <small class="text-muted">⚠️ 请先检索学号，系统将根据性别自动显示对应测试项目</small>
+                        </div>
+                    </div>
+
+                    <!-- 速度与耐力 -->
+                    <div class="section-title">🏃 速度与耐力</div>
+                    <div class="row g-2">
+                        <div class="col-sm-3"><label class="form-label small">50米跑 (秒)</label><input type="number" step="0.1" name="sprint_50m" class="form-control form-control-sm" placeholder="例如 7.5"></div>
+                        <div class="col-sm-3" id="run_800m_container" style="display:none;">
+                            <label class="form-label small">800米跑 (分秒)</label>
+                            <input type="number" step="0.01" name="run_800m" class="form-control form-control-sm" placeholder="例如 3.30 表示3分30秒">
+                            <small class="text-muted">仅女生填写</small>
+                        </div>
+                        <div class="col-sm-3" id="run_1000m_container" style="display:none;">
+                            <label class="form-label small">1000米跑 (分秒)</label>
+                            <input type="number" step="0.01" name="run_1000m" class="form-control form-control-sm" placeholder="例如 3.40 表示3分40秒">
+                            <small class="text-muted">仅男生填写</small>
+                        </div>
+                    </div>
+
+                    <!-- 评定 -->
+                    <div class="section-title">📊 综合评定</div>
+                    <div class="row g-2">
+                        <div class="col-sm-3"><label class="form-label small">总分</label><input type="number" step="0.1" name="total_score" class="form-control form-control-sm"></div>
+                        <div class="col-sm-3">
+                            <label class="form-label small">等级</label>
+                            <select name="grade" class="form-select form-select-sm">
+                                <option value="">请选择</option>
+                                <option>优秀</option><option>良好</option><option>及格</option><option>不及格</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-3"><label class="form-label small">测试人员</label><input type="text" name="tester" class="form-control form-control-sm"></div>
+                        <div class="col-sm-3"><label class="form-label small">备注</label><input type="text" name="note" class="form-control form-control-sm"></div>
+                    </div>
+
+                    <div class="mt-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-warning" style="flex:1;">💾 保存体测数据</button>
+                        <button type="reset" class="btn btn-outline-secondary">重置</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.getElementById('testDate').value = new Date().toISOString().split('T')[0];
+        async function searchStudent() {
+            const sid = document.getElementById('search_id').value.trim();
+            const div = document.getElementById('searchResult');
+            if (!sid) { div.innerHTML = '<div class="alert alert-warning py-1 small">请输入学号</div>'; return; }
+            div.innerHTML = '<div class="spinner-border spinner-border-sm"></div>';
+            const r = await fetch('/fitness_search', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'student_id='+encodeURIComponent(sid)});
+            const html = await r.text(); div.innerHTML = html;
+            const nameEl = document.getElementById('found_name');
+            if (nameEl) {
+                document.getElementById('student_id').value = sid;
+                document.getElementById('student_name').value = nameEl.value;
+                const g = document.getElementById('found_gender').value;
+                document.getElementById('gender').value = g;
+                document.getElementById('situp_container').style.display = (g=='2') ? 'block' : 'none';
+                document.getElementById('pullup_container').style.display = (g=='1') ? 'block' : 'none';
+                // 根据性别显示对应长跑项目
+                if (g === '2') {
+                    document.getElementById('run_800m_container').style.display = 'block';
+                    document.getElementById('run_1000m_container').style.display = 'none';
+                    document.getElementById('run_800m').value = '';
+                    document.getElementById('run_1000m').value = '';
+                } else if (g === '1') {
+                    document.getElementById('run_800m_container').style.display = 'none';
+                    document.getElementById('run_1000m_container').style.display = 'block';
+                    document.getElementById('run_800m').value = '';
+                    document.getElementById('run_1000m').value = '';
+                } else {
+                    document.getElementById('run_800m_container').style.display = 'none';
+                    document.getElementById('run_1000m_container').style.display = 'none';
+                    document.getElementById('run_800m').value = '';
+                    document.getElementById('run_1000m').value = '';
+                }
+                document.getElementById('gender_hint').style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
