@@ -193,6 +193,59 @@ def init_db():
         )
     """)
 
+    # 预警规则表
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS alert_rules (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            rule_name TEXT NOT NULL,
+            description TEXT,
+            source_table TEXT NOT NULL,
+            source_field TEXT NOT NULL,
+            operator TEXT NOT NULL,
+            threshold REAL NOT NULL,
+            alert_level TEXT NOT NULL,
+            is_active INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    # 预警记录表
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS alerts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            student_id TEXT NOT NULL,
+            rule_id INTEGER NOT NULL,
+            alert_level TEXT NOT NULL,
+            source_table TEXT NOT NULL,
+            source_score REAL NOT NULL,
+            triggered_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            status TEXT DEFAULT '待处理',
+            note TEXT
+        )
+    """)
+
+    conn.commit()
+
+    # 插入预置规则（如不存在）
+    default_rules = [
+        ("重度抑郁风险", "PHQ-9总分≥20", "answers", "total_score", ">=", 20, "高危"),
+        ("中度抑郁风险", "PHQ-9总分≥15", "answers", "total_score", ">=", 15, "中危"),
+        ("重度焦虑风险", "GAD-7总分≥20", "gad7_answers", "total_score", ">=", 20, "高危"),
+        ("中度焦虑风险", "GAD-7总分≥15", "gad7_answers", "total_score", ">=", 15, "中危"),
+        ("睡眠质量差", "PSQI总分≥11", "psqi_answers", "total_score", ">=", 11, "中危"),
+        ("饮食质量较差", "KIDMED总分≤3", "kidmed_answers", "total_score", "<=", 3, "低危"),
+    ]
+    for name, desc, tbl, fld, op, thresh, level in default_rules:
+        exists = cursor.execute(
+            "SELECT id FROM alert_rules WHERE rule_name = ? AND source_table = ?",
+            (name, tbl)
+        ).fetchone()
+        if not exists:
+            cursor.execute(
+                "INSERT INTO alert_rules (rule_name, description, source_table, source_field, operator, threshold, alert_level) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (name, desc, tbl, fld, op, thresh, level)
+            )
+
     conn.commit()
     conn.close()
 
@@ -202,6 +255,63 @@ def generate_uid():
     timestamp = str(int(time.time() * 1000))
     rand_num = str(random.randint(100, 999))
     return f"YHDP{timestamp}{rand_num}"
+
+
+def check_and_create_alerts(student_id, source_table, score):
+    """
+    预警规则引擎：根据学生得分检查所有激活规则，触发生成预警记录。
+    返回本次触发的预警数量。
+    """
+    conn = get_db()
+    cursor = conn.cursor()
+
+    rules = cursor.execute(
+        """SELECT * FROM alert_rules
+           WHERE is_active = 1 AND source_table = ?""",
+        (source_table,)
+    ).fetchall()
+
+    triggered = 0
+    for rule in rules:
+        op = rule["operator"]
+        threshold = rule["threshold"]
+        match = False
+
+        if op == ">=" and score >= threshold:
+            match = True
+        elif op == "<=" and score <= threshold:
+            match = True
+        elif op == ">" and score > threshold:
+            match = True
+        elif op == "<" and score < threshold:
+            match = True
+        elif op == "==" and score == threshold:
+            match = True
+
+        if not match:
+            continue
+
+        # 检查是否已存在 待处理 的重复预警
+        dup = cursor.execute(
+            """SELECT id FROM alerts
+               WHERE student_id = ? AND rule_id = ? AND status = '待处理'""",
+            (student_id, rule["id"])
+        ).fetchone()
+
+        if dup:
+            continue
+
+        cursor.execute(
+            """INSERT INTO alerts
+               (student_id, rule_id, alert_level, source_table, source_score)
+               VALUES (?, ?, ?, ?, ?)""",
+            (student_id, rule["id"], rule["alert_level"], source_table, score)
+        )
+        triggered += 1
+
+    conn.commit()
+    conn.close()
+    return triggered
 
 
 # ============================================================
@@ -507,6 +617,7 @@ def submit():
         valid_flag
     ))
     conn.commit()
+    check_and_create_alerts(student_id, "answers", total_score)
     conn.close()
 
     return render_template(
@@ -574,6 +685,7 @@ def gad7_submit():
         valid_flag
     ))
     conn.commit()
+    check_and_create_alerts(student_id, "gad7_answers", total_score)
     conn.close()
 
     return render_template(
@@ -679,6 +791,7 @@ def psqi_submit():
         valid_flag
     ))
     conn.commit()
+    check_and_create_alerts(student_id, "psqi_answers", total_score)
     conn.close()
 
     return render_template(
@@ -785,6 +898,7 @@ def kidmed_submit():
         valid_flag
     ))
     conn.commit()
+    check_and_create_alerts(student_id, "kidmed_answers", total_score)
     conn.close()
 
     return render_template(
@@ -923,6 +1037,7 @@ def family_support_submit():
         time_end_str, valid_flag
     ))
     conn.commit()
+    check_and_create_alerts(student_id, "family_support_answers", family_total)
     conn.close()
 
     return render_template(
@@ -1023,6 +1138,7 @@ def cognition_submit():
         start_time_str if ts else None, time_end_str, valid_flag
     ))
     conn.commit()
+    check_and_create_alerts(student_id, "cognition_answers", total)
     conn.close()
 
     return render_template(
@@ -1032,6 +1148,140 @@ def cognition_submit():
         total_score=total, risk_level=risk_level,
         valid_flag=valid_flag, uid=uid
     )
+
+
+# ============================================================
+#  预警规则引擎
+# ============================================================
+
+SOURCE_TABLE_OPTIONS = [
+    ("answers", "PHQ-9 抑郁"),
+    ("gad7_answers", "GAD-7 焦虑"),
+    ("psqi_answers", "PSQI 睡眠"),
+    ("kidmed_answers", "KIDMED 饮食"),
+    ("family_support_answers", "家庭支持"),
+    ("cognition_answers", "运动认知"),
+]
+
+
+@app.route("/rules")
+def rules_list():
+    """规则列表页面"""
+    conn = get_db()
+    rules = conn.execute("SELECT * FROM alert_rules ORDER BY id").fetchall()
+    conn.close()
+    return render_template("rules.html", rules=rules)
+
+
+@app.route("/rules/add", methods=["GET", "POST"])
+def rules_add():
+    """新增规则"""
+    if request.method == "POST":
+        conn = get_db()
+        conn.execute(
+            """INSERT INTO alert_rules
+               (rule_name, description, source_table, source_field, operator, threshold, alert_level, is_active)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                request.form.get("rule_name", "").strip(),
+                request.form.get("description", "").strip(),
+                request.form.get("source_table", "").strip(),
+                request.form.get("source_field", "total_score").strip(),
+                request.form.get("operator", ">=").strip(),
+                float(request.form.get("threshold", 0)),
+                request.form.get("alert_level", "中危").strip(),
+                1 if request.form.get("is_active") == "1" else 0,
+            )
+        )
+        conn.commit()
+        conn.close()
+        return redirect(url_for("rules_list"))
+    return render_template("rules_add_edit.html", rule=None, tables=SOURCE_TABLE_OPTIONS)
+
+
+@app.route("/rules/edit/<int:rule_id>", methods=["GET", "POST"])
+def rules_edit(rule_id):
+    """编辑规则"""
+    conn = get_db()
+    if request.method == "POST":
+        conn.execute(
+            """UPDATE alert_rules SET
+               rule_name=?, description=?, source_table=?, source_field=?,
+               operator=?, threshold=?, alert_level=?, is_active=?
+               WHERE id=?""",
+            (
+                request.form.get("rule_name", "").strip(),
+                request.form.get("description", "").strip(),
+                request.form.get("source_table", "").strip(),
+                request.form.get("source_field", "total_score").strip(),
+                request.form.get("operator", ">=").strip(),
+                float(request.form.get("threshold", 0)),
+                request.form.get("alert_level", "中危").strip(),
+                1 if request.form.get("is_active") == "1" else 0,
+                rule_id,
+            )
+        )
+        conn.commit()
+        conn.close()
+        return redirect(url_for("rules_list"))
+    rule = conn.execute("SELECT * FROM alert_rules WHERE id = ?", (rule_id,)).fetchone()
+    conn.close()
+    if not rule:
+        return "规则不存在", 404
+    return render_template("rules_add_edit.html", rule=rule, tables=SOURCE_TABLE_OPTIONS)
+
+
+@app.route("/rules/delete/<int:rule_id>", methods=["POST"])
+def rules_delete(rule_id):
+    """删除规则"""
+    conn = get_db()
+    conn.execute("DELETE FROM alert_rules WHERE id = ?", (rule_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for("rules_list"))
+
+
+@app.route("/rules/toggle/<int:rule_id>", methods=["POST"])
+def rules_toggle(rule_id):
+    """切换规则启用/禁用"""
+    conn = get_db()
+    rule = conn.execute("SELECT is_active FROM alert_rules WHERE id = ?", (rule_id,)).fetchone()
+    if rule:
+        new_state = 0 if rule["is_active"] == 1 else 1
+        conn.execute("UPDATE alert_rules SET is_active = ? WHERE id = ?", (new_state, rule_id))
+        conn.commit()
+    conn.close()
+    return redirect(url_for("rules_list"))
+
+
+@app.route("/run_alert_check")
+def run_alert_check():
+    """全量扫描：对所有学生所有量表检查预警"""
+    conn = get_db()
+    cursor = conn.cursor()
+    total_triggers = 0
+
+    # PHQ-9
+    for row in cursor.execute("SELECT * FROM answers").fetchall():
+        total_triggers += check_and_create_alerts(row["student_id"], "answers", row["total_score"])
+    # GAD-7
+    for row in cursor.execute("SELECT * FROM gad7_answers").fetchall():
+        total_triggers += check_and_create_alerts(row["student_id"], "gad7_answers", row["total_score"])
+    # PSQI
+    for row in cursor.execute("SELECT * FROM psqi_answers").fetchall():
+        total_triggers += check_and_create_alerts(row["student_id"], "psqi_answers", row["total_score"])
+    # KIDMED
+    for row in cursor.execute("SELECT * FROM kidmed_answers").fetchall():
+        total_triggers += check_and_create_alerts(row["student_id"], "kidmed_answers", row["total_score"])
+    # Family
+    for row in cursor.execute("SELECT * FROM family_support_answers").fetchall():
+        total_triggers += check_and_create_alerts(row["student_id"], "family_support_answers", row["family_total"])
+    # Cognition
+    for row in cursor.execute("SELECT * FROM cognition_answers").fetchall():
+        total_triggers += check_and_create_alerts(row["student_id"], "cognition_answers", row["total_score"])
+
+    conn.close()
+    return f"全量预警扫描完成，共触发 {total_triggers} 条新预警。"
 
 
 # ============================================================
@@ -1211,6 +1461,26 @@ def my_health():
         "body_score": latest_phys["body_score"] if latest_phys else None,
     }
 
+    # ---- 预警数据 ----
+    alert_rows = cursor.execute(
+        """SELECT a.*, r.rule_name, r.description
+           FROM alerts a
+           JOIN alert_rules r ON a.rule_id = r.id
+           WHERE a.student_id = ?
+           ORDER BY
+             CASE a.alert_level WHEN '高危' THEN 1 WHEN '中危' THEN 2 ELSE 3 END,
+             a.triggered_at DESC""",
+        (student_id,)
+    ).fetchall()
+
+    alert_summary = {
+        "total": len(alert_rows),
+        "highest": "高危" if any(a["alert_level"] == "高危" for a in alert_rows)
+                   else "中危" if any(a["alert_level"] == "中危" for a in alert_rows)
+                   else "低危" if alert_rows else None,
+        "details": alert_rows,
+    }
+
     conn.close()
 
     return render_template(
@@ -1219,6 +1489,7 @@ def my_health():
         scales=scales,
         phys=phys,
         physical_count=len(physical_data),
+        alerts=alert_summary,
     )
 
 

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if rule %}编辑{% else %}新增{% endif %}预警规则</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f0f2f5; }
+        .container { max-width: 640px; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); margin-top: 40px; }
+        .card-header { background: #e74c3c; color: white; border-radius: 12px 12px 0 0; padding: 20px 24px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">{% if rule %}✏️ 编辑规则{% else %}➕ 新增规则{% endif %}</h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">规则名称 <span class="text-danger">*</span></label>
+                        <input type="text" name="rule_name" class="form-control" value="{{ rule.rule_name if rule else '' }}" required placeholder="如：中度抑郁风险">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">描述</label>
+                        <input type="text" name="description" class="form-control" value="{{ rule.description if rule else '' }}" placeholder="简要说明该规则">
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-bold">数据源 <span class="text-danger">*</span></label>
+                            <select name="source_table" class="form-select" required>
+                                {% for val, label in tables %}
+                                <option value="{{ val }}" {% if rule and rule.source_table == val %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold">比较字段</label>
+                            <input type="text" name="source_field" class="form-control" value="{{ rule.source_field if rule else 'total_score' }}" placeholder="如: total_score">
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-4">
+                            <label class="form-label fw-bold">运算符</label>
+                            <select name="operator" class="form-select">
+                                {% for op in ['>=', '<=', '>', '<', '=='] %}
+                                <option value="{{ op }}" {% if rule and rule.operator == op %}selected{% endif %}>{{ op }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label fw-bold">阈值</label>
+                            <input type="number" step="0.1" name="threshold" class="form-control" value="{{ rule.threshold if rule else 10 }}" required>
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label fw-bold">预警等级</label>
+                            <select name="alert_level" class="form-select">
+                                {% for lv in ['高危', '中危', '低危'] %}
+                                <option value="{{ lv }}" {% if rule and rule.alert_level == lv %}selected{% endif %}>{{ lv }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" name="is_active" value="1" id="is_active"
+                               {% if not rule or rule.is_active == 1 %}checked{% endif %}>
+                        <label class="form-check-label" for="is_active">启用该规则</label>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger">💾 保存规则</button>
+                        <a href="/rules" class="btn btn-outline-secondary">取消</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

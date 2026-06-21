@@ -37,6 +37,43 @@
             ⚠️ 免责声明：本档案数据仅供参考与健康管理，不能替代专业医疗诊断。如有健康疑虑，请咨询专业医师。
         </div>
 
+        <!-- 预警汇总区 -->
+        {% if alerts.total == 0 %}
+        <div class="alert alert-success d-flex align-items-center" role="alert" style="border-radius:10px;">
+            <span style="font-size:1.4rem;margin-right:10px;">✅</span>
+            <div>当前未触发任何预警，请继续保持！</div>
+        </div>
+        {% else %}
+        <div class="alert {% if alerts.highest == '高危' %}alert-danger{% elif alerts.highest == '中危' %}alert-warning{% else %}alert-info{% endif %}" role="alert" style="border-radius:10px;">
+            <span style="font-size:1.4rem;">⚠️</span>
+            <strong>您有 {{ alerts.total }} 条健康提醒需要关注</strong>
+        </div>
+        <div class="list-group mb-3 shadow-sm" style="border-radius:10px;overflow:hidden;">
+            {% for a in alerts.details %}
+            <div class="list-group-item" style="border-left:5px solid {% if a.alert_level == '高危' %}#E74C3C{% elif a.alert_level == '中危' %}#F39C12{% else %}#F1C40F{% endif %};">
+                <div class="d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#alertDetail{{ a.id }}" role="button" style="cursor:pointer;">
+                    <div>
+                        <span class="badge {% if a.alert_level == '高危' %}bg-danger{% elif a.alert_level == '中危' %}bg-warning text-dark{% else %}bg-info{% endif %} me-2">{{ a.alert_level }}</span>
+                        <strong>{{ a.rule_name }}</strong>
+                        <small class="text-muted ms-2">触发日期：{{ a.triggered_at[:10] if a.triggered_at else '' }}</small>
+                        <small class="text-muted ms-2">得分：{{ a.source_score }}</small>
+                    </div>
+                    <small class="text-muted">详情 ▾</small>
+                </div>
+                <div class="collapse mt-2" id="alertDetail{{ a.id }}">
+                    <div class="p-2 bg-light rounded small">
+                        {% if a.description %}<p class="mb-1"><strong>说明：</strong>{{ a.description }}</p>{% endif %}
+                        <p class="mb-0"><strong>来源：</strong>{{ a.source_table }} | <strong>得分：</strong>{{ a.source_score }} | <strong>触发时间：</strong>{{ a.triggered_at[:19] if a.triggered_at else '' }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="small text-muted mb-3 px-2">
+            ⚠️ 本预警仅基于您填写的数据自动生成，仅供参考，不能替代专业医学诊断。如有不适，请及时就医。
+        </div>
+        {% endif %}
+
         <!-- 第一部分：综合健康画像 -->
         <div class="section-title">📊 综合健康画像</div>
         <div class="row g-3">
