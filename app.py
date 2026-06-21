@@ -1285,6 +1285,157 @@ def run_alert_check():
 
 
 # ============================================================
+#  教师端预警总览
+# ============================================================
+
+@app.route("/alerts")
+def alerts_dashboard():
+    """教师端预警总览"""
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # 筛选参数
+    alert_level = request.args.get("level", "").strip()
+    rule_type = request.args.get("rule_type", "").strip()
+    status = request.args.get("status", "").strip()
+    date_from = request.args.get("date_from", "").strip()
+    date_to = request.args.get("date_to", "").strip()
+    search = request.args.get("search", "").strip()
+
+    # 构建查询
+    query = """SELECT a.*, r.rule_name, s.student_name
+               FROM alerts a
+               JOIN alert_rules r ON a.rule_id = r.id
+               LEFT JOIN students s ON a.student_id = s.student_id
+               WHERE 1=1"""
+    params = []
+
+    if alert_level:
+        query += " AND a.alert_level = ?"
+        params.append(alert_level)
+    if rule_type:
+        query += " AND r.rule_name = ?"
+        params.append(rule_type)
+    if status:
+        query += " AND a.status = ?"
+        params.append(status)
+    if date_from:
+        query += " AND a.triggered_at >= ?"
+        params.append(date_from)
+    if date_to:
+        query += " AND a.triggered_at <= ?"
+        params.append(date_to + " 23:59:59")
+    if search:
+        query += " AND (a.student_id LIKE ? OR s.student_name LIKE ?)"
+        params.extend([f"%{search}%", f"%{search}%"])
+
+    query += " ORDER BY CASE a.alert_level WHEN '高危' THEN 1 WHEN '中危' THEN 2 ELSE 3 END, a.triggered_at DESC"
+    alerts = cursor.execute(query, params).fetchall()
+
+    # 统计数据（全量，不受筛选影响）
+    total_alerts = cursor.execute("SELECT COUNT(*) as c FROM alerts").fetchone()["c"]
+    high_cnt = cursor.execute("SELECT COUNT(*) as c FROM alerts WHERE alert_level='高危'").fetchone()["c"]
+    mid_cnt = cursor.execute("SELECT COUNT(*) as c FROM alerts WHERE alert_level='中危'").fetchone()["c"]
+    low_cnt = cursor.execute("SELECT COUNT(*) as c FROM alerts WHERE alert_level='低危'").fetchone()["c"]
+    pending_cnt = cursor.execute("SELECT COUNT(*) as c FROM alerts WHERE status='待处理'").fetchone()["c"]
+
+    # 规则类型列表（用于筛选下拉）
+    rule_types = cursor.execute("SELECT DISTINCT rule_name FROM alert_rules ORDER BY rule_name").fetchall()
+
+    conn.close()
+
+    return render_template(
+        "alerts.html",
+        alerts=alerts,
+        total_alerts=total_alerts,
+        high_cnt=high_cnt,
+        mid_cnt=mid_cnt,
+        low_cnt=low_cnt,
+        pending_cnt=pending_cnt,
+        rule_types=rule_types,
+        filters={"level": alert_level, "rule_type": rule_type, "status": status,
+                 "date_from": date_from, "date_to": date_to, "search": search},
+    )
+
+
+@app.route("/alerts/export")
+def alerts_export():
+    """导出预警数据为 CSV"""
+    level = request.args.get("level", "").strip()
+    rule_type = request.args.get("rule_type", "").strip()
+    status = request.args.get("status", "").strip()
+    date_from = request.args.get("date_from", "").strip()
+    date_to = request.args.get("date_to", "").strip()
+    search = request.args.get("search", "").strip()
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    query = """SELECT a.*, r.rule_name, s.student_name
+               FROM alerts a
+               JOIN alert_rules r ON a.rule_id = r.id
+               LEFT JOIN students s ON a.student_id = s.student_id
+               WHERE 1=1"""
+    params = []
+
+    if level:
+        query += " AND a.alert_level = ?"; params.append(level)
+    if rule_type:
+        query += " AND r.rule_name = ?"; params.append(rule_type)
+    if status:
+        query += " AND a.status = ?"; params.append(status)
+    if date_from:
+        query += " AND a.triggered_at >= ?"; params.append(date_from)
+    if date_to:
+        query += " AND a.triggered_at <= ?"; params.append(date_to + " 23:59:59")
+    if search:
+        query += " AND (a.student_id LIKE ? OR s.student_name LIKE ?)"
+        params.extend([f"%{search}%", f"%{search}%"])
+
+    query += " ORDER BY a.triggered_at DESC"
+    rows = cursor.execute(query, params).fetchall()
+    conn.close()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["学号", "姓名", "规则名称", "预警等级", "触发日期", "得分", "状态", "备注"])
+    for r in rows:
+        writer.writerow([r["student_id"], r["student_name"], r["rule_name"],
+                         r["alert_level"], r["triggered_at"], r["source_score"],
+                         r["status"], r["note"] or ""])
+
+    resp = make_response(output.getvalue())
+    resp.headers["Content-Type"] = "text/csv; charset=utf-8-sig"
+    resp.headers["Content-Disposition"] = "attachment; filename=alerts_export.csv"
+    return resp
+
+
+@app.route("/alerts/student/<student_id>")
+def alerts_student_view(student_id):
+    """查看某学生的所有预警记录"""
+    conn = get_db()
+    cursor = conn.cursor()
+    records = cursor.execute(
+        """SELECT a.*, r.rule_name, s.student_name
+           FROM alerts a
+           JOIN alert_rules r ON a.rule_id = r.id
+           LEFT JOIN students s ON a.student_id = s.student_id
+           WHERE a.student_id = ?
+           ORDER BY a.triggered_at DESC""",
+        (student_id,)
+    ).fetchall()
+    student = cursor.execute(
+        "SELECT * FROM students WHERE student_id = ?", (student_id,)
+    ).fetchone()
+    conn.close()
+    if not student:
+        return "学生不存在", 404
+    return render_template("alerts.html", alerts=records, student_view=student,
+                           total_alerts=0, high_cnt=0, mid_cnt=0, low_cnt=0, pending_cnt=0,
+                           rule_types=[], filters={})
+
+
+# ============================================================
 #  学生健康档案（一生一档 Phase 1）
 # ============================================================
 

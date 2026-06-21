@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if student_view %}{{ student_view.student_name }} - 预警记录{% else %}预警总览{% endif %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f0f2f5; padding-bottom: 40px; }
+        .container { max-width: 1100px; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); margin-top: 20px; }
+        .card-header { background: #e74c3c; color: white; border-radius: 12px 12px 0 0; padding: 20px 24px; }
+        .stat-card { border: none; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 16px; text-align: center; background: white; }
+        .stat-card .num { font-size: 2rem; font-weight: 700; }
+        .stat-card .lbl { font-size: 0.8rem; color: #888; }
+        .table { font-size: 0.86rem; vertical-align: middle; }
+        .filter-bar { background: white; border-radius: 10px; padding: 16px; margin: 16px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        {% if student_view %}
+        <!-- 学生专页 -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div><h4 class="mb-1">🔍 {{ student_view.student_name }}（{{ student_view.student_id }}）</h4><small class="opacity-75">预警记录</small></div>
+                <a href="/alerts" class="btn btn-light btn-sm">← 返回总览</a>
+            </div>
+            <div class="card-body p-0">
+                {% if alerts %}
+                <table class="table table-hover mb-0">
+                    <thead class="table-light"><tr><th>规则</th><th>等级</th><th>得分</th><th>触发日期</th><th>状态</th></tr></thead>
+                    <tbody>
+                        {% for a in alerts %}
+                        <tr>
+                            <td><strong>{{ a.rule_name }}</strong></td>
+                            <td><span class="badge {% if a.alert_level=='高危' %}bg-danger{% elif a.alert_level=='中危' %}bg-warning text-dark{% else %}bg-info{% endif %}">{{ a.alert_level }}</span></td>
+                            <td>{{ a.source_score }}</td>
+                            <td>{{ a.triggered_at[:19] if a.triggered_at else '' }}</td>
+                            <td>{{ a.status }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="text-center py-4 text-muted">该学生暂无预警记录</div>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <!-- 教师总览 -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div><h4 class="mb-1">⚠️ 预警总览</h4><p class="mb-0 opacity-75 small">教师端预警管理后台</p></div>
+                <div>
+                    <a href="/rules" class="btn btn-light btn-sm me-2">⚙️ 规则管理</a>
+                    <a href="/alerts/export?{{ request.query_string.decode() }}" class="btn btn-outline-light btn-sm">📥 导出 CSV</a>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- 统计卡片 -->
+                <div class="row g-2 mb-3">
+                    <div class="col-3"><div class="stat-card"><div class="num text-secondary">{{ total_alerts }}</div><div class="lbl">总预警</div></div></div>
+                    <div class="col-3"><div class="stat-card"><div class="num text-danger">{{ high_cnt }}</div><div class="lbl">高危</div></div></div>
+                    <div class="col-3"><div class="stat-card"><div class="num text-warning">{{ mid_cnt }}</div><div class="lbl">中危</div></div></div>
+                    <div class="col-3"><div class="stat-card"><div class="num text-info">{{ low_cnt }}</div><div class="lbl">低危</div></div></div>
+                </div>
+
+                <!-- 筛选区 -->
+                <form class="filter-bar" method="GET">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-2">
+                            <label class="form-label small fw-bold">等级</label>
+                            <select name="level" class="form-select form-select-sm">
+                                <option value="">全部</option>
+                                <option value="高危" {% if filters.level=='高危' %}selected{% endif %}>高危</option>
+                                <option value="中危" {% if filters.level=='中危' %}selected{% endif %}>中危</option>
+                                <option value="低危" {% if filters.level=='低危' %}selected{% endif %}>低危</option>
+                            </select>
+                        </div>
+                        <div class="col-2">
+                            <label class="form-label small fw-bold">规则</label>
+                            <select name="rule_type" class="form-select form-select-sm">
+                                <option value="">全部</option>
+                                {% for rt in rule_types %}
+                                <option value="{{ rt.rule_name }}" {% if filters.rule_type==rt.rule_name %}selected{% endif %}>{{ rt.rule_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-2">
+                            <label class="form-label small fw-bold">状态</label>
+                            <select name="status" class="form-select form-select-sm">
+                                <option value="">全部</option>
+                                <option value="待处理" {% if filters.status=='待处理' %}selected{% endif %}>待处理</option>
+                                <option value="已通知" {% if filters.status=='已通知' %}selected{% endif %}>已通知</option>
+                                <option value="已处理" {% if filters.status=='已处理' %}selected{% endif %}>已处理</option>
+                            </select>
+                        </div>
+                        <div class="col-1">
+                            <label class="form-label small fw-bold">从</label>
+                            <input type="date" name="date_from" class="form-control form-control-sm" value="{{ filters.date_from }}">
+                        </div>
+                        <div class="col-1">
+                            <label class="form-label small fw-bold">到</label>
+                            <input type="date" name="date_to" class="form-control form-control-sm" value="{{ filters.date_to }}">
+                        </div>
+                        <div class="col-2">
+                            <label class="form-label small fw-bold">搜索</label>
+                            <input type="text" name="search" class="form-control form-control-sm" placeholder="学号/姓名" value="{{ filters.search }}">
+                        </div>
+                        <div class="col-2">
+                            <button type="submit" class="btn btn-danger btn-sm w-100">🔍 筛选</button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- 预警列表 -->
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr><th>学号</th><th>姓名</th><th>规则</th><th>等级</th><th>得分</th><th>触发日期</th><th>状态</th><th>操作</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for a in alerts %}
+                            <tr>
+                                <td><code>{{ a.student_id }}</code></td>
+                                <td>
+                                    <a href="/alerts/student/{{ a.student_id }}" class="fw-bold text-decoration-none">{{ a.student_name }}</a>
+                                </td>
+                                <td>{{ a.rule_name }}</td>
+                                <td><span class="badge {% if a.alert_level=='高危' %}bg-danger{% elif a.alert_level=='中危' %}bg-warning text-dark{% else %}bg-info{% endif %}">{{ a.alert_level }}</span></td>
+                                <td>{{ a.source_score }}</td>
+                                <td class="small">{{ a.triggered_at[:16] if a.triggered_at else '' }}</td>
+                                <td>{{ a.status }}</td>
+                                <td>
+                                    <a href="/alerts/student/{{ a.student_id }}" class="btn btn-outline-secondary btn-sm">查看</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% if not alerts %}
+                            <tr><td colspan="8" class="text-center text-muted py-4">暂无预警记录</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
